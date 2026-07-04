@@ -241,7 +241,11 @@ export async function handleStripeEvent(event: Stripe.Event) {
 }
 
 async function markInvoicePaid(session: Stripe.Checkout.Session) {
-  const { invoiceId, companyId, customerId } = session.metadata as Record<string, string>;
+  // Guard narrows string | undefined → string (noUncheckedIndexedAccess) and
+  // makes a malformed/foreign webhook payload a clean no-op, not a crash.
+  const meta = (session.metadata ?? {}) as Record<string, string | undefined>;
+  const { invoiceId, companyId, customerId } = meta;
+  if (!invoiceId || !companyId || !customerId) return; // not one of ours
   const paymentIntentId =
     typeof session.payment_intent === "string" ? session.payment_intent : session.payment_intent?.id ?? null;
 
