@@ -10,4 +10,4 @@
  *   Client Components                  →  @mazidi/auth/client
  *   Edge middleware                    →  @mazidi/auth/middleware
  */
-export { ssoCookieOptions } from "./cookies";
+export { ssoCookieOptions, type CookieToSet } from "./cookies";

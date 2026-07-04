@@ -1,6 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
-import { ssoCookieOptions } from "./cookies";
+import { ssoCookieOptions, type CookieToSet } from "./cookies";
 
 /**
  * SERVER-ONLY entry (`next/headers`). Import as "@mazidi/auth/server".
@@ -15,7 +15,7 @@ export async function supabaseServer() {
       cookieOptions: ssoCookieOptions(),
       cookies: {
         getAll: () => cookieStore.getAll(),
-        setAll: (all) => {
+        setAll: (all: CookieToSet[]) => {
           try {
             all.forEach(({ name, value, options }) => cookieStore.set(name, value, options));
           } catch {

@@ -10,11 +10,19 @@
     "./client": "./src/client.ts",
     "./middleware": "./src/middleware.ts"
   },
-  "scripts": { "typecheck": "tsc --noEmit" },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
   "dependencies": {
     "@supabase/ssr": "^0.6.1",
     "@supabase/supabase-js": "^2.47.10"
   },
-  "devDependencies": { "typescript": "^5.7.2", "next": "^15.1.4" },
-  "peerDependencies": { "next": "^15.0.0" }
+  "devDependencies": {
+    "@types/node": "^22.10.5",
+    "next": "^15.1.4",
+    "typescript": "^5.7.2"
+  },
+  "peerDependencies": {
+    "next": "^15.0.0"
+  }
 }

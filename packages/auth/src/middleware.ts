@@ -1,6 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import type { NextRequest, NextResponse } from "next/server";
-import { ssoCookieOptions } from "./cookies";
+import { ssoCookieOptions, type CookieToSet } from "./cookies";
 
 /**
  * EDGE entry for Next middleware. Import as "@mazidi/auth/middleware".
@@ -14,7 +14,7 @@ export function supabaseMiddleware(req: NextRequest, res: NextResponse) {
       cookieOptions: ssoCookieOptions(),
       cookies: {
         getAll: () => req.cookies.getAll(),
-        setAll: (all) => {
+        setAll: (all: CookieToSet[]) => {
           all.forEach(({ name, value }) => req.cookies.set(name, value));
           all.forEach(({ name, value, options }) => res.cookies.set(name, value, options));
         },

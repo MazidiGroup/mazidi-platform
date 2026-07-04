@@ -1,3 +1,4 @@
+/// <reference path="./env.d.ts" />
 /**
  * @mazidi/config — tenant registry + static group content.
  * Single source of truth for pillar metadata and the list of tenant slugs
