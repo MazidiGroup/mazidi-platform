@@ -1,0 +1,8 @@
+@import "@mazidi/ui/styles/tokens.css";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body { -webkit-font-smoothing: antialiased; }
+
+.hero-grad { background-color: var(--bg); background-image: var(--hero-grad); }

@@ -1,0 +1,25 @@
+/* Meridian tokens — imported once per app in globals.css */
+:root {
+  --gold: #C9A461; --gold-deep: #A87F3D; --gold-soft: #E8CFA0;
+  --build: #C08A4E; --run: #4E7EC0; --grow: #3FA372;
+}
+[data-theme="dark"] {
+  --bg: #0B0D12; --bg2: #12151D; --bg3: #1A1E29;
+  --line: #232836; --line2: #2C3242;
+  --t1: #F2F3F5; --t2: #9AA0AD; --t3: #6B7180;
+  --shadow: 0 24px 64px rgba(0, 0, 0, .45);
+  --hero-grad:
+    radial-gradient(1200px 700px at 75% -10%, rgba(78,126,192,.14), transparent 60%),
+    radial-gradient(900px 600px at 15% 110%, rgba(192,138,78,.12), transparent 60%);
+}
+[data-theme="light"] {
+  --bg: #FAFAF7; --bg2: #FFFFFF; --bg3: #F1F0EB;
+  --line: #E8E7E2; --line2: #DBD9D2;
+  --t1: #101319; --t2: #5A5F6B; --t3: #9095A1;
+  --shadow: 0 24px 64px rgba(16, 19, 25, .12);
+  --hero-grad:
+    radial-gradient(1200px 700px at 75% -10%, rgba(78,126,192,.10), transparent 60%),
+    radial-gradient(900px 600px at 15% 110%, rgba(192,138,78,.10), transparent 60%);
+}
+::selection { background: var(--gold); color: #0B0D12; }
+body { background: var(--bg); color: var(--t1); }

@@ -1,0 +1,26 @@
+{
+  "name": "@mazidi/api",
+  "version": "0.0.1",
+  "private": true,
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "stripe:sync": "tsx src/scripts/sync-plans.ts"
+  },
+  "dependencies": {
+    "@mazidi/db": "workspace:*",
+    "@mazidi/config": "workspace:*",
+    "zod": "^3.24.1",
+    "@supabase/supabase-js": "^2.47.10",
+    "stripe": "^17.5.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.2",
+    "tsx": "^4.19.2"
+  },
+  "exports": {
+    ".": "./src/index.ts",
+    "./schemas": "./src/schemas.ts"
+  }
+}

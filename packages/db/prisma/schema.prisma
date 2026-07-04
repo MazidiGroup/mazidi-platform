@@ -1,0 +1,652 @@
+// Mazidi Group — multi-tenant schema (docs/03-DATABASE-SCHEMA.md)
+// Rule: tenant tables carry companyId. Customers are GROUP-level.
+// Relations are declared where the application traverses them;
+// other foreign keys are indexed scalars to keep coupling low.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ── Enums ────────────────────────────────────────────────
+enum Role {
+  SUPER_ADMIN
+  COMPANY_ADMIN
+  MANAGER
+  EMPLOYEE
+  CLIENT
+}
+enum Pillar {
+  BUILD
+  RUN
+  GROW
+}
+enum CompanyStatus {
+  DRAFT
+  LIVE
+  ARCHIVED
+}
+enum JourneyStage {
+  IDEA
+  SETUP
+  BUILD
+  OPERATE
+  GROW
+  EXPAND
+  INVEST
+  EXIT
+}
+enum LeadSource {
+  WEBSITE_FORM
+  REFERRAL
+  CAMPAIGN
+  CALL
+  EMAIL
+  EVENT
+  AUTOMATION
+}
+enum LeadStatus {
+  NEW
+  QUALIFIED
+  CONTACTED
+  CONVERTED
+  LOST
+}
+enum DealStage {
+  LEAD
+  QUALIFIED
+  PROPOSAL
+  NEGOTIATION
+  WON
+  LOST
+}
+enum ActivityKind {
+  CALL
+  EMAIL
+  MEETING
+  NOTE
+  FORM
+  TICKET
+  INVOICE
+  SYSTEM
+}
+enum ProjectStatus {
+  PLANNED
+  ACTIVE
+  ON_HOLD
+  COMPLETED
+  CANCELLED
+}
+enum TaskStatus {
+  TODO
+  IN_PROGRESS
+  BLOCKED
+  DONE
+}
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+enum InvoiceStatus {
+  DRAFT
+  SENT
+  DUE
+  PAID
+  OVERDUE
+  VOID
+}
+enum DocVisibility {
+  PRIVATE
+  CLIENT
+  COMPANY
+  GROUP
+}
+enum ContractStatus {
+  DRAFT
+  SENT
+  SIGNED
+  EXPIRED
+  CANCELLED
+}
+enum TicketStatus {
+  OPEN
+  PENDING
+  RESOLVED
+  CLOSED
+}
+enum PostKind {
+  BLOG
+  VIDEO
+  CASE_STUDY
+  REPORT
+}
+enum AIAssistant {
+  ADVISOR
+  FINANCE
+  MARKETING
+  PROPOSAL
+  QUOTE
+  SUPPORT
+}
+
+// ── Identity ─────────────────────────────────────────────
+model User {
+  id               String       @id @db.Uuid // = Supabase auth.users.id
+  email            String       @unique
+  fullName         String
+  phone            String?
+  avatarUrl        String?
+  locale           String       @default("en")
+  twoFactorEnabled Boolean      @default(false)
+  createdAt        DateTime     @default(now())
+  memberships      Membership[]
+  customer         Customer?
+  employee         Employee?
+}
+
+model Membership {
+  id        String   @id @default(uuid())
+  userId    String   @db.Uuid
+  companyId String? // null = group-level role
+  role      Role
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  company   Company? @relation(fields: [companyId], references: [id])
+
+  @@unique([userId, companyId, role])
+  @@index([companyId])
+}
+
+// ── Tenancy ──────────────────────────────────────────────
+model Company {
+  id          String        @id @default(uuid())
+  slug        String        @unique
+  name        String
+  pillar      Pillar
+  tagline     String?
+  description String?
+  brand       Json          @default("{}") // { accent, mono, logoUrl, heroImage }
+  domains     Json          @default("[]")
+  status      CompanyStatus @default(DRAFT)
+  settings    Json          @default("{}")
+  createdAt   DateTime      @default(now())
+
+  memberships  Membership[]
+  services     Service[]
+  customers    CustomerCompany[]
+  leads        Lead[]
+  deals        Deal[]
+  projects     Project[]
+  invoices     Invoice[]
+  posts        Post[]
+  testimonials Testimonial[]
+}
+
+model Service {
+  id        String   @id @default(uuid())
+  companyId String
+  slug      String
+  name      String
+  summary   String
+  body      Json     @default("{}")
+  priceFrom Decimal? @db.Decimal(12, 2)
+  /// Stripe recurring Price id — set by packages/api/src/scripts/sync-plans.ts
+  stripePriceId String?
+  /// service ids recommended when this one completes (automation input)
+  crossSells String[] @default([])
+  sortOrder  Int      @default(0)
+  company    Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@unique([companyId, slug])
+}
+
+// ── Customers (group-level) ──────────────────────────────
+model Customer {
+  id               String         @id @default(uuid())
+  userId           String         @unique @db.Uuid
+  stripeCustomerId String?        @unique
+  orgName       String?
+  vatNumber     String?
+  country       String?
+  lifetimeValue Decimal           @default(0) @db.Decimal(14, 2)
+  createdAt     DateTime          @default(now())
+  user          User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  companies     CustomerCompany[]
+  businesses    ClientBusiness[]
+  invoices      Invoice[]
+  projects      Project[]
+  deals         Deal[]
+}
+
+model CustomerCompany {
+  customerId String
+  companyId  String
+  since      DateTime @default(now())
+  status     String   @default("active")
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  company    Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@id([customerId, companyId])
+}
+
+model ClientBusiness {
+  id         String       @id @default(uuid())
+  customerId String
+  name       String
+  industry   String?
+  stage      JourneyStage @default(IDEA)
+  customer   Customer     @relation(fields: [customerId], references: [id], onDelete: Cascade)
+}
+
+// ── CRM ──────────────────────────────────────────────────
+model Contact {
+  id         String  @id @default(uuid())
+  companyId  String
+  customerId String?
+  name       String
+  email      String?
+  phone      String?
+  source     String?
+  tags       String[] @default([])
+  createdAt  DateTime @default(now())
+  leads      Lead[]
+
+  @@index([companyId])
+  @@index([email])
+}
+
+model Lead {
+  id           String     @id @default(uuid())
+  companyId    String
+  contactId    String
+  source       LeadSource
+  score        Int        @default(0)
+  status       LeadStatus @default(NEW)
+  ownerId      String?    @db.Uuid
+  capturedFrom Json       @default("{}")
+  createdAt    DateTime   @default(now())
+  company      Company    @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  contact      Contact    @relation(fields: [contactId], references: [id], onDelete: Cascade)
+
+  @@index([companyId, status])
+}
+
+model Deal {
+  id          String    @id @default(uuid())
+  companyId   String
+  customerId  String?
+  leadId      String?
+  title       String
+  value       Decimal   @db.Decimal(14, 2)
+  currency    String    @default("GBP")
+  stage       DealStage @default(LEAD)
+  probability Int       @default(20)
+  ownerId     String?   @db.Uuid
+  closesAt    DateTime?
+  createdAt   DateTime  @default(now())
+  company     Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  customer    Customer? @relation(fields: [customerId], references: [id])
+
+  @@index([companyId, stage])
+}
+
+/// Every interaction becomes CRM data (docs/01 §CRM Philosophy).
+model Activity {
+  id         String       @id @default(uuid())
+  companyId  String
+  kind       ActivityKind
+  refId      String?
+  contactId  String?
+  customerId String?
+  dealId     String?
+  authorId   String?      @db.Uuid
+  title      String
+  body       Json         @default("{}")
+  at         DateTime     @default(now())
+
+  @@index([companyId, at])
+  @@index([customerId, at])
+}
+
+// ── Delivery ─────────────────────────────────────────────
+model Project {
+  id         String        @id @default(uuid())
+  companyId  String
+  customerId String
+  name       String
+  status     ProjectStatus @default(PLANNED)
+  progress   Int           @default(0) // 0-100
+  startsAt   DateTime?
+  dueAt      DateTime?
+  budget     Decimal?      @db.Decimal(14, 2)
+  createdAt  DateTime      @default(now())
+  company    Company       @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  customer   Customer      @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  milestones Milestone[]
+  tasks      Task[]
+
+  @@index([customerId])
+  @@index([companyId, status])
+}
+
+model Milestone {
+  id        String    @id @default(uuid())
+  projectId String
+  name      String
+  dueAt     DateTime?
+  done      Boolean   @default(false)
+  project   Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+}
+
+model Task {
+  id         String     @id @default(uuid())
+  companyId  String
+  projectId  String?
+  assigneeId String?    @db.Uuid
+  title      String
+  status     TaskStatus @default(TODO)
+  priority   Priority   @default(MEDIUM)
+  dueAt      DateTime?
+  project    Project?   @relation(fields: [projectId], references: [id], onDelete: SetNull)
+
+  @@index([companyId, status])
+  @@index([assigneeId])
+}
+
+model Meeting {
+  id         String    @id @default(uuid())
+  companyId  String
+  customerId String?
+  hostId     String    @db.Uuid
+  title      String
+  startsAt   DateTime
+  endsAt     DateTime
+  joinUrl    String?
+  aiSummary  Json?
+
+  @@index([companyId, startsAt])
+  @@index([customerId, startsAt])
+}
+
+// ── Finance ──────────────────────────────────────────────
+model Invoice {
+  id              String        @id @default(uuid())
+  number          String        @unique
+  companyId       String
+  customerId      String
+  amount          Decimal       @db.Decimal(14, 2)
+  tax             Decimal       @default(0) @db.Decimal(14, 2)
+  currency        String        @default("GBP")
+  status          InvoiceStatus @default(DRAFT)
+  dueAt           DateTime
+  stripeInvoiceId String?
+  lines           Json          @default("[]")
+  createdAt       DateTime      @default(now())
+  company         Company       @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  customer        Customer      @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  payments        Payment[]
+
+  @@index([customerId, status])
+  @@index([companyId, status])
+}
+
+model Payment {
+  id                    String   @id @default(uuid())
+  invoiceId             String
+  amount                Decimal  @db.Decimal(14, 2)
+  method                String   @default("card")
+  stripePaymentIntentId String?
+  paidAt                DateTime @default(now())
+  invoice               Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+}
+
+model Subscription {
+  id                   String   @id @default(uuid())
+  companyId            String
+  customerId           String
+  serviceId            String
+  stripeSubscriptionId String?
+  status               String   @default("active")
+  renewsAt             DateTime
+
+  @@index([customerId])
+}
+
+// ── Documents & comms ────────────────────────────────────
+model Document {
+  id          String        @id @default(uuid())
+  companyId   String?
+  customerId  String?
+  projectId   String?
+  name        String
+  storagePath String
+  mime        String
+  size        Int
+  uploadedBy  String        @db.Uuid
+  visibility  DocVisibility @default(CLIENT)
+  createdAt   DateTime      @default(now())
+
+  @@index([customerId])
+  @@index([projectId])
+}
+
+model Contract {
+  id         String         @id @default(uuid())
+  documentId String
+  companyId  String
+  customerId String
+  status     ContractStatus @default(DRAFT)
+  signedAt   DateTime?
+
+  @@index([customerId])
+}
+
+model MessageThread {
+  id         String    @id @default(uuid())
+  companyId  String
+  customerId String?
+  subject    String?
+  createdAt  DateTime  @default(now())
+  messages   Message[]
+
+  @@index([customerId])
+}
+
+model Message {
+  id          String        @id @default(uuid())
+  threadId    String
+  senderId    String        @db.Uuid
+  body        String
+  attachments Json?
+  at          DateTime      @default(now())
+  thread      MessageThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
+
+  @@index([threadId, at])
+}
+
+model Ticket {
+  id         String       @id @default(uuid())
+  companyId  String
+  customerId String
+  subject    String
+  status     TicketStatus @default(OPEN)
+  priority   Priority     @default(MEDIUM)
+  assigneeId String?      @db.Uuid
+
+  @@index([companyId, status])
+  @@index([customerId])
+}
+
+model Notification {
+  id     String    @id @default(uuid())
+  userId String    @db.Uuid
+  kind   String
+  title  String
+  body   String?
+  href   String?
+  readAt DateTime?
+  at     DateTime  @default(now())
+
+  @@index([userId, readAt])
+}
+
+// ── HR & internal ────────────────────────────────────────
+model Employee {
+  id               String     @id @default(uuid())
+  userId           String     @unique @db.Uuid
+  primaryCompanyId String?
+  title            String
+  department       String?
+  managerId        String?
+  startedAt        DateTime   @default(now())
+  salaryBand       String?
+  user             User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  timesheets       Timesheet[]
+}
+
+model Timesheet {
+  id         String   @id @default(uuid())
+  employeeId String
+  date       DateTime @db.Date
+  minutes    Int
+  projectId  String?
+  approvedBy String?  @db.Uuid
+  employee   Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@index([employeeId, date])
+}
+
+model PayrollRun {
+  id        String @id @default(uuid())
+  companyId String
+  period    String
+  status    String @default("draft")
+  totals    Json   @default("{}")
+}
+
+model Approval {
+  id          String  @id @default(uuid())
+  kind        String
+  refId       String
+  requesterId String  @db.Uuid
+  approverId  String? @db.Uuid
+  status      String  @default("pending")
+}
+
+// ── CMS & insights ───────────────────────────────────────
+model Page {
+  id          String    @id @default(uuid())
+  companyId   String?
+  path        String
+  title       String
+  sections    Json      @default("[]")
+  seo         Json      @default("{}")
+  publishedAt DateTime?
+
+  @@unique([companyId, path])
+}
+
+model Post {
+  id          String    @id @default(uuid())
+  companyId   String?
+  slug        String    @unique
+  kind        PostKind
+  title       String
+  excerpt     String
+  body        Json      @default("{}")
+  heroImage   String?
+  authorName  String    @default("Mazidi Group")
+  tags        String[]  @default([])
+  readMinutes Int       @default(5)
+  publishedAt DateTime?
+  company     Company?  @relation(fields: [companyId], references: [id])
+
+  @@index([kind, publishedAt])
+}
+
+model Testimonial {
+  id        String   @id @default(uuid())
+  companyId String?
+  author    String
+  role      String
+  quote     String
+  rating    Int      @default(5)
+  featured  Boolean  @default(false)
+  company   Company? @relation(fields: [companyId], references: [id])
+}
+
+// ── Automation & AI ──────────────────────────────────────
+model AutomationRule {
+  id         String   @id @default(uuid())
+  name       String
+  trigger    Json     // { event: "project.completed", companySlug: "construction" }
+  conditions Json     @default("[]")
+  actions    Json     // [{ type: "recommend", service: "..." }, ...]
+  enabled    Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  runs       AutomationRun[]
+}
+
+model AutomationRun {
+  id     String         @id @default(uuid())
+  ruleId String
+  refId  String
+  result Json           @default("{}")
+  at     DateTime       @default(now())
+  rule   AutomationRule @relation(fields: [ruleId], references: [id], onDelete: Cascade)
+}
+
+/// Transactional outbox: domain events picked up by n8n (docs/04 §4).
+model OutboxEvent {
+  id          String    @id @default(uuid())
+  event       String    // e.g. "project.completed"
+  companyId   String?
+  payload     Json      @default("{}")
+  processedAt DateTime?
+  at          DateTime  @default(now())
+
+  @@index([processedAt, at])
+}
+
+model AIConversation {
+  id        String      @id @default(uuid())
+  userId    String      @db.Uuid
+  companyId String?
+  assistant AIAssistant
+  messages  Json        @default("[]")
+  createdAt DateTime    @default(now())
+
+  @@index([userId, createdAt])
+}
+
+model KnowledgeDoc {
+  id        String  @id @default(uuid())
+  companyId String?
+  title     String
+  content   String
+  // embedding vector(1536) — add via raw SQL migration once pgvector is enabled
+
+  @@index([companyId])
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  userId    String?  @db.Uuid
+  companyId String?
+  action    String
+  entity    String
+  entityId  String
+  diff      Json?
+  ip        String?
+  at        DateTime @default(now())
+
+  @@index([companyId, at])
+  @@index([userId, at])
+}
