@@ -1,6 +1,5 @@
 import { notFound } from "next/navigation";
 import { getCompanyBySlug } from "@mazidi/api";
-import { isTenantSlug } from "@mazidi/config";
 import { Container, Kicker, Lead, Section } from "@mazidi/ui";
 import { LeadForm } from "@/components/LeadForm";
 
@@ -9,7 +8,7 @@ export const revalidate = 300;
 export default async function SiteContactPage({ params }: { params: Promise<{ site: string }> }) {
   const { site } = await params;
   const company = await getCompanyBySlug(site);
-  if (!company || !isTenantSlug(site)) notFound();
+  if (!company) notFound(); // getCompanyBySlug is LIVE-gated — the DB is the registry
 
   return (
     <Section>

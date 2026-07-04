@@ -274,6 +274,7 @@ model Lead {
   createdAt    DateTime   @default(now())
   company      Company    @relation(fields: [companyId], references: [id], onDelete: Cascade)
   contact      Contact    @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  deals        Deal[]
 
   @@index([companyId, status])
 }
@@ -293,8 +294,11 @@ model Deal {
   createdAt   DateTime  @default(now())
   company     Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
   customer    Customer? @relation(fields: [customerId], references: [id])
+  /// Provenance: set when the deal was created from a lead (docs/01 Journey B).
+  lead        Lead?     @relation(fields: [leadId], references: [id], onDelete: SetNull)
 
   @@index([companyId, stage])
+  @@index([leadId])
 }
 
 /// Every interaction becomes CRM data (docs/01 §CRM Philosophy).
@@ -402,7 +406,7 @@ model Payment {
   invoiceId             String
   amount                Decimal  @db.Decimal(14, 2)
   method                String   @default("card")
-  stripePaymentIntentId String?
+  stripePaymentIntentId String?  @unique
   paidAt                DateTime @default(now())
   invoice               Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
 }
@@ -412,7 +416,7 @@ model Subscription {
   companyId            String
   customerId           String
   serviceId            String
-  stripeSubscriptionId String?
+  stripeSubscriptionId String?  @unique
   status               String   @default("active")
   renewsAt             DateTime
 

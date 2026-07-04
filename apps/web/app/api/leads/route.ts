@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { captureLead, leadInputSchema } from "@mazidi/api";
+import { captureLead, LeadCaptureError, leadInputSchema } from "@mazidi/api";
 
 /**
  * POST /v1-style lead capture (docs/04 §/v1/leads).
@@ -31,6 +31,8 @@ export async function POST(req: NextRequest) {
     });
     return NextResponse.json({ data: result, error: null }, { status: 201 });
   } catch (e) {
+    if (e instanceof LeadCaptureError)
+      return NextResponse.json({ data: null, error: e.message }, { status: e.status });
     console.error("lead capture failed", e);
     return NextResponse.json({ data: null, error: "Internal error" }, { status: 500 });
   }

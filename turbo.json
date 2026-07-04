@@ -12,7 +12,12 @@
     "AUTH_COOKIE_DOMAIN",
     "DEMO_MODE",
     "STRIPE_SECRET_KEY",
-    "STRIPE_WEBHOOK_SECRET"
+    "STRIPE_WEBHOOK_SECRET",
+    "NEXT_PUBLIC_TEAM_URL",
+    "NEXT_PUBLIC_ADMIN_URL",
+    "OPENAI_API_KEY",
+    "OPENAI_MODEL",
+    "CRON_SECRET"
   ],
   "tasks": {
     "build": {

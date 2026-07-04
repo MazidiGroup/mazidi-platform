@@ -16,7 +16,10 @@ Architecture source of truth: `../docs/01–05`. Phase 2's `../index.html` is a 
 | Lead capture → CRM (Contact + Lead + Activity + outbox event) | `apps/web/app/api/leads` | ✅ |
 | Client portal (auth-guarded, DB-driven dashboard/invoices/projects/documents, cross-sell recommendations) | `apps/portal` | ✅ |
 | Stripe billing: invoice checkout, plan subscriptions, billing portal, signature-verified webhook → Payment/Subscription + Activity + OutboxEvent | `packages/api/src/services/billing.ts`, `apps/portal/app/api/billing/*` | ✅ |
-| Employee portal, admin, AI assistants, n8n runtime | — | Next (steps 7–10) |
+| Employee portal: role-gated (Membership ≥ EMPLOYEE), membership-scoped CRM (leads, deal pipeline), tasks, dashboard | `apps/team` (:3002), `packages/api/src/services/team.ts` | ✅ |
+| Admin control plane: tenant CRUD (DRAFT→LIVE), services, users & RBAC (auto Employee profile on staff grant), system analytics, AuditLog on every mutation | `apps/admin` (:3003), `packages/api/src/services/admin.ts` | ✅ |
+| Automation engine: outbox consumer, rule matching (event/company/occurrence/amount), recommend → Notification, crm.createLead, AutomationRun log, admin rules UI + cron/n8n drain endpoint | `packages/api/src/services/automations.ts`, `apps/admin` | ✅ |
+| AI assistants: portal Business Advisor + team CRM Assistant — real OpenAI, DB-grounded context, persisted AIConversation | `packages/api/src/services/ai.ts`, `/advisor`, `/assistant` | ✅ |
 
 ## Setup
 
@@ -30,7 +33,7 @@ pnpm env:link                 # symlinks .env into apps/* and packages/db
 pnpm db:generate              # prisma client
 pnpm db:migrate               # creates all tables (uses DIRECT_URL)
 pnpm db:seed                  # 21 tenants, services, insights, automation rules
-pnpm dev                      # web on :3000, portal on :3001
+pnpm dev                      # web :3000 · portal :3001 · team :3002 · admin :3003
 ```
 
 Then, in Supabase:
@@ -58,6 +61,71 @@ PAID, writes `Payment` + `Activity` + `OutboxEvent("invoice.paid")`. Portal → 
 (tenant association — cross-sell recommendations update automatically) + `OutboxEvent("customer.active")`.
 **Manage billing** opens the Stripe customer portal (enable it once: Dashboard → Settings →
 Billing → Customer portal → Activate test link).
+
+## Employee portal (Module 2)
+
+- `localhost:3002` — sign-in reuses the same SSO (`@mazidi/auth`); add
+  `http://localhost:3002/auth/callback` to Supabase → Auth → URL Configuration.
+- Access requires an `Employee` row + `Membership` (role ≥ EMPLOYEE). With
+  `DEMO_MODE=true`, first team login self-provisions a demo employee scoped to
+  Construction + Accounting + Marketing, with sample leads/deals/tasks.
+  Production employees are created by the admin module (Module 3).
+- Tenancy axis differs from the client portal: employees see rows
+  `WHERE companyId IN (their memberships)`; clients see `WHERE customerId = theirs`.
+  Shared tables (Project, Invoice, Ticket, Activity) serve both axes; Task,
+  Timesheet, Lead, Deal are employee-surface only.
+- Lead state machine: `NEW → QUALIFIED → CONTACTED → CONVERTED`, forward-only
+  (skips allowed); `LOST` reachable from any pre-CONVERTED state; CONVERTED and
+  LOST are terminal. Map lives in `LEAD_TRANSITIONS` (`@mazidi/api/schemas`),
+  enforced server-side in `updateLeadStatus` (409 on illegal moves) and
+  mirrored by the dropdown (terminal states render as pills).
+- Leads table view: defaults to **Active** (NEW/QUALIFIED/CONTACTED); Closed
+  (CONVERTED/LOST) and All are one click away — leads are permanent history,
+  the deal is a linked record, presentation avoids the duplication feel.
+- Lead → pipeline: CONVERTED leads get a "→ Deal" action (links `Deal.leadId`,
+  starts at QUALIFIED); standalone deals via the form above the pipeline.
+  Deal creation emits `OutboxEvent("deal.created")`.
+- Writes → CRM/outbox: lead status change → `Activity` (+ `lead.converted`),
+  deal → WON → `OutboxEvent("deal.won")` (feeds "Marketing win → Sales Consulting"),
+  task create/complete → `Activity`.
+- New env var `NEXT_PUBLIC_TEAM_URL` (all four .env files + `apps/team/.env`).
+
+## Admin control plane (Module 3)
+
+- `localhost:3003` — add `http://localhost:3003/auth/callback` to Supabase redirect URLs.
+- Access: SUPER_ADMIN (group-level membership) manages everything; COMPANY_ADMIN
+  is scoped to their companies and cannot grant admin roles or change publish status.
+- Bootstrap: with `DEMO_MODE=true`, first admin login self-provisions SUPER_ADMIN
+  (dev only). Production: grant once via SQL —
+  `insert into "Membership" ("id","userId","role") values (gen_random_uuid(), '<auth-user-uuid>', 'SUPER_ADMIN');`
+  — then manage successors in Users & Roles.
+- Tenant lifecycle: created as DRAFT → publish LIVE (emits `tenant.published`).
+  `/sites/{slug}` works immediately; the SUBDOMAIN additionally needs the slug in
+  `TENANT_SLUGS` (`packages/config`) + deploy, because edge middleware cannot query the DB.
+- Users & Roles: granting EMPLOYEE/MANAGER/COMPANY_ADMIN auto-creates the Employee
+  profile (team-app access); self-revocation of SUPER_ADMIN is blocked.
+- Every admin mutation writes `AuditLog`; tenant/membership changes emit outbox events.
+- New env var `NEXT_PUBLIC_ADMIN_URL` (all .env files + `apps/admin/.env`).
+
+## Automations + AI (Module 4)
+
+- **Engine**: `OutboxEvent` (written by every module) → `POST /api/automations/run`
+  (admin button on :3003/automations, or `x-cron-secret: $CRON_SECRET` for n8n/Vercel
+  cron) → matches enabled `AutomationRule`s → actions:
+  `recommend` (Notification to the client + Activity), `crm.createLead` (Contact +
+  Lead source AUTOMATION in the target company), `email` (recorded as skipped until
+  Resend is wired). Every execution logged in `AutomationRun`; events claimed
+  race-safely, exactly once.
+- **Conditions supported**: `event`, `companySlug`, `occurrence` (nth PAID invoice
+  for that customer+company), `amountGte` (customer lifetime paid).
+- **End-to-end demo**: pay 2 invoices to Accounting → `invoice.paid` events →
+  Run engine → "2nd invoice paid → Payroll" fires → client gets a Notification
+  (portal :3001/notifications) and the rule's run appears in admin.
+- **AI**: set `OPENAI_API_KEY` (all .env files). Portal `/advisor` = Business
+  Advisor grounded in the client's live projects/invoices/subscriptions;
+  team `/assistant` = CRM assistant grounded in the employee's scoped pipeline.
+  Conversations persist in `AIConversation`; missing key → honest 503, no canned replies.
+- New env vars: `OPENAI_API_KEY`, `OPENAI_MODEL` (optional), `CRON_SECRET`.
 
 ## Local tenant preview
 

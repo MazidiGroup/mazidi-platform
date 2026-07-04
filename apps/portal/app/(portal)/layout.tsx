@@ -13,6 +13,8 @@ const NAV: [string, [string, string, string][]][] = [
     ["/invoices", "Invoices", "▥"],
     ["/billing", "Billing", "◈"],
     ["/documents", "Documents", "▧"],
+    ["/advisor", "AI Advisor", "✦"],
+    ["/notifications", "Notifications", "🔔"],
   ]],
 ];
 

@@ -45,11 +45,8 @@ function resolveImport(fromFile, spec) {
     return path.join(pkg.dir, target);
   }
   if (spec.startsWith("@/")) {
-    const appRoot = fromFile.includes(`${path.sep}apps${path.sep}web${path.sep}`)
-      ? path.join(ROOT, "apps/web")
-      : fromFile.includes(`${path.sep}apps${path.sep}portal${path.sep}`)
-        ? path.join(ROOT, "apps/portal")
-        : null;
+    const m = fromFile.match(new RegExp(`(.*${path.sep}apps${path.sep}[^${path.sep}]+)${path.sep}`));
+    const appRoot = m ? m[1] : null;
     if (!appRoot) return null;
     spec = path.join(appRoot, spec.slice(2));
   } else if (spec.startsWith(".")) {

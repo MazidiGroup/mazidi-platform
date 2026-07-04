@@ -8,3 +8,4 @@ export { KPICard } from "./components/KPICard";
 export { Field, Input, Select, Textarea } from "./components/Field";
 export { SidebarShell, SideGroup, SideItem } from "./components/SidebarShell";
 export { pillarKey, pillarText, pillarBg, pillarBorder } from "./pillar";
+export { ChatPanel } from "./components/ChatPanel";

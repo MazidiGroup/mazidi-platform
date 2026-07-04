@@ -2,13 +2,12 @@
 import { useState, useTransition } from "react";
 import { leadInputSchema } from "@mazidi/api/schemas";
 import { Button, Field, Input, Select, Textarea } from "@mazidi/ui";
-import type { TenantSlug } from "@mazidi/config";
 
 /**
  * Public lead form → POST /api/leads → CRM (Contact + Lead + Activity + outbox).
  * The Zod schema is shared with the route handler (docs/02 §Patterns).
  */
-export function LeadForm({ companySlug }: { companySlug?: TenantSlug }) {
+export function LeadForm({ companySlug }: { companySlug?: string }) {
   const [pending, start] = useTransition();
   const [done, setDone] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});

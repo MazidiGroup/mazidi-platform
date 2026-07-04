@@ -1,6 +1,10 @@
 import { prisma } from "@mazidi/db";
 import type { LeadInput } from "../schemas";
 
+export class LeadCaptureError extends Error {
+  constructor(message: string, public status = 422) { super(message); }
+}
+
 /**
  * Every website form becomes CRM data: Contact + Lead + Activity
  * (docs/01 §CRM Philosophy) and emits an OutboxEvent for n8n follow-ups
@@ -9,7 +13,10 @@ import type { LeadInput } from "../schemas";
  */
 export async function captureLead(input: LeadInput, meta: { ip?: string; path?: string }) {
   const slug = input.companySlug ?? "consulting";
-  const company = await prisma.company.findUniqueOrThrow({ where: { slug } });
+  // DB is the tenant registry (docs/01 §6) — admin-created LIVE tenants qualify;
+  // DRAFT/ARCHIVED or unknown slugs are rejected, not 500s.
+  const company = await prisma.company.findFirst({ where: { slug, status: "LIVE" } });
+  if (!company) throw new LeadCaptureError(`Unknown or unpublished company "${slug}"`, 404);
 
   return prisma.$transaction(async (tx) => {
     const contact = await tx.contact.create({

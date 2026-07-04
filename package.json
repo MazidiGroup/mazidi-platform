@@ -10,7 +10,7 @@
     "db:generate": "pnpm --filter @mazidi/db generate",
     "db:migrate": "pnpm --filter @mazidi/db migrate",
     "db:seed": "pnpm --filter @mazidi/db seed",
-    "env:link": "ln -sf ../../.env apps/web/.env.local && ln -sf ../../.env apps/portal/.env.local && ln -sf ../../.env packages/db/.env",
+    "env:link": "ln -sf ../../.env apps/web/.env.local && ln -sf ../../.env apps/portal/.env.local && ln -sf ../../.env apps/team/.env.local && ln -sf ../../.env packages/db/.env && ln -sf ../../.env apps/admin/.env.local",
     "check:boundaries": "node scripts/check-boundaries.mjs"
   },
   "devDependencies": {

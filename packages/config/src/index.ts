@@ -82,3 +82,5 @@ export const CTA_LABELS = [
 export const ROOT_DOMAIN = process.env.NEXT_PUBLIC_ROOT_DOMAIN ?? "mazidigroup.com";
 export const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? `https://${ROOT_DOMAIN}`;
 export const PORTAL_URL = process.env.NEXT_PUBLIC_PORTAL_URL ?? `https://portal.${ROOT_DOMAIN}`;
+export const TEAM_URL = process.env.NEXT_PUBLIC_TEAM_URL ?? `https://team.${ROOT_DOMAIN}`;
+export const ADMIN_URL = process.env.NEXT_PUBLIC_ADMIN_URL ?? `https://admin.${ROOT_DOMAIN}`;

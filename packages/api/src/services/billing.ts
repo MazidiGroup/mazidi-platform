@@ -1,5 +1,5 @@
 import Stripe from "stripe";
-import { prisma } from "@mazidi/db";
+import { Prisma, prisma } from "@mazidi/db";
 
 /**
  * Stripe billing (docs/04 §/v1/finance, §Integrations).
@@ -253,6 +253,10 @@ async function markInvoicePaid(session: Stripe.Checkout.Session) {
   const invoice = await prisma.invoice.findUnique({ where: { id: invoiceId } });
   if (!invoice || invoice.status === "PAID") return;
 
+  // Webhook and redirect-reconcile run concurrently by design; the unique
+  // constraint on stripePaymentIntentId makes the loser's transaction fail
+  // with P2002 — which simply means "already processed".
+  try {
   await prisma.$transaction([
     prisma.payment.create({
       data: {
@@ -278,6 +282,10 @@ async function markInvoicePaid(session: Stripe.Checkout.Session) {
       data: { event: "invoice.paid", companyId, payload: { invoiceId, customerId } },
     }),
   ]);
+  } catch (e) {
+    if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") return;
+    throw e;
+  }
 }
 
 async function upsertSubscription(sub: Stripe.Subscription) {
@@ -299,6 +307,7 @@ async function upsertSubscription(sub: Stripe.Subscription) {
   const { serviceId, companyId, customerId } = (sub.metadata ?? {}) as Record<string, string>;
   if (!serviceId || !companyId || !customerId) return; // not one of ours
 
+  try {
   await prisma.$transaction([
     prisma.subscription.create({
       data: {
@@ -328,4 +337,9 @@ async function upsertSubscription(sub: Stripe.Subscription) {
       data: { event: "customer.active", companyId, payload: { customerId, serviceId } },
     }),
   ]);
+  } catch (e) {
+    // Unique stripeSubscriptionId: concurrent webhook/reconcile — already handled.
+    if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") return;
+    throw e;
+  }
 }

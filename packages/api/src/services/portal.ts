@@ -1,4 +1,4 @@
-import { prisma } from "@mazidi/db";
+import { Prisma, prisma } from "@mazidi/db";
 import type { User } from "@supabase/supabase-js";
 
 /**
@@ -17,12 +17,27 @@ export async function ensureCustomer(user: User) {
     create: { id: user.id, email: user.email ?? "", fullName },
   });
 
+  // Race-safe: layout + page components call this in parallel within one
+  // request (App Router). create → on P2002 re-fetch; membership + demo
+  // seeding run only in the branch that won the create (exactly once).
   let customer = await prisma.customer.findUnique({ where: { userId: user.id } });
   if (!customer) {
-    customer = await prisma.customer.create({ data: { userId: user.id } });
-    await prisma.membership.create({
-      data: { userId: user.id, role: "CLIENT" },
+    try {
+      customer = await prisma.customer.create({ data: { userId: user.id } });
+    } catch (e) {
+      if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
+        return prisma.customer.findUniqueOrThrow({ where: { userId: user.id } });
+      }
+      throw e;
+    }
+    // Compound unique (userId, companyId, role) has companyId = null here and
+    // Postgres treats NULLs as distinct — so guard instead of relying on upsert.
+    const existingClientRole = await prisma.membership.findFirst({
+      where: { userId: user.id, companyId: null, role: "CLIENT" },
     });
+    if (!existingClientRole) {
+      await prisma.membership.create({ data: { userId: user.id, role: "CLIENT" } });
+    }
     if (process.env.DEMO_MODE === "true") await seedDemoEngagements(customer.id);
   }
   return customer;
@@ -123,5 +138,17 @@ async function seedDemoEngagements(customerId: string) {
       { companyId: marketing.id, customerId, kind: "NOTE", title: "Campaign draft ready for review", body: {} },
       { companyId: accounting.id, customerId, kind: "SYSTEM", title: "June management accounts published", body: {} },
     ],
+  });
+}
+
+/** Notifications — written by the automation engine's "recommend" action. */
+export async function listNotifications(userId: string) {
+  return prisma.notification.findMany({ where: { userId }, orderBy: { at: "desc" }, take: 50 });
+}
+
+export async function markAllNotificationsRead(userId: string) {
+  await prisma.notification.updateMany({
+    where: { userId, readAt: null },
+    data: { readAt: new Date() },
   });
 }
