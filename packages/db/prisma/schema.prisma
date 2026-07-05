@@ -4,7 +4,9 @@
 // other foreign keys are indexed scalars to keep coupling low.
 
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
+  // "native" = local dev (macOS); "rhel-openssl-3.0.x" = Vercel serverless runtime
+  binaryTargets = ["native", "rhel-openssl-3.0.x"]
 }
 
 datasource db {
