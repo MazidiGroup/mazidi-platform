@@ -2,7 +2,7 @@
  * @mazidi/db — Prisma client singleton (server-only).
  * The app connects with the pooled DATABASE_URL; migrations use DIRECT_URL.
  */
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient } from "../generated/client";
 
 const globalForPrisma = globalThis as unknown as { prisma?: PrismaClient };
 
@@ -14,4 +14,4 @@ export const prisma =
 
 if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma;
 
-export * from "@prisma/client";
+export * from "../generated/client";

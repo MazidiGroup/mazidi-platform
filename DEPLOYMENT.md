@@ -308,8 +308,9 @@ In order:
 | Symptom | Cause → fix |
 |---|---|
 | Build: `Cannot find module '.prisma/client'` | Build Command override missing → set `pnpm -w db:generate && next build` (3.1) |
-| Runtime: `PrismaClientInitializationError: could not locate the Query Engine for runtime "rhel-openssl-3.0.x"` | `binaryTargets` missing Vercel's runtime in `schema.prisma`'s generator block → must be `["native", "rhel-openssl-3.0.x"]`, then regenerate + redeploy |
+| Runtime: `PrismaClientInitializationError: could not locate the Query Engine for runtime "rhel-openssl-3.0.x"` | Two-part fix in this repo: (1) generator block has `binaryTargets = ["native", "rhel-openssl-3.0.x"]` AND `output = "../generated/client"` — generating into `packages/db/generated/` keeps the engine out of the pnpm virtual store where Vercel's file tracing loses it across symlinks; (2) each app's `next.config.mjs` force-traces `packages/db/generated/client/*.node` via `outputFileTracingIncludes`. If it recurs, check both are intact and the deploy includes them |
 | Build: Prisma `P1001 can't reach database` | Wrong/missing `DATABASE_URL` in that Vercel project, or DB not created yet (Part 1 before Part 3) |
+| A domain serves the WRONG app's login (e.g. portal shows "Super Admin") | That Vercel project's **Root Directory** points at the wrong `apps/*` folder — check Settings → General in all four projects (page `<title>` tells you which app is actually being served). Fix + Redeploy; root-dir changes only apply to new builds |
 | Wildcard domain stuck "pending" | Nameservers not switched yet, or apex added to a different project than the wildcard — both belong to `mazidi-web` |
 | Login loops back to `/login` | `AUTH_COOKIE_DOMAIN` missing/wrong (needs the leading dot) or you're testing on `*.vercel.app` URLs — SSO cookies only work on the real domain |
 | Magic link email never arrives | Supabase default SMTP rate limit → 1.3.4 custom SMTP |
