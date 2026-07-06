@@ -312,6 +312,7 @@ In order:
 | Build: Prisma `P1001 can't reach database` | Wrong/missing `DATABASE_URL` in that Vercel project, or DB not created yet (Part 1 before Part 3) |
 | A domain serves the WRONG app's login (e.g. portal shows "Super Admin") | That Vercel project's **Root Directory** points at the wrong `apps/*` folder — check Settings → General in all four projects (page `<title>` tells you which app is actually being served). Fix + Redeploy; root-dir changes only apply to new builds |
 | Wildcard domain stuck "pending" | Nameservers not switched yet, or apex added to a different project than the wildcard — both belong to `mazidi-web` |
+| `500 MIDDLEWARE_INVOCATION_FAILED` on portal/team/admin | An Edge-incompatible import reached middleware (historically: @supabase/supabase-js touching Node APIs at module scope). This repo's middleware is now dependency-free by design (`edgeAuthGuard`, cookie-presence only; verification happens server-side via `getUser()`); `check:boundaries` bans supabase/prisma from edge graphs. If it recurs, run the checker and inspect the middleware import trace in the build log |
 | Login loops back to `/login` | `AUTH_COOKIE_DOMAIN` missing/wrong (needs the leading dot) or you're testing on `*.vercel.app` URLs — SSO cookies only work on the real domain |
 | Magic link email never arrives | Supabase default SMTP rate limit → 1.3.4 custom SMTP |
 | Magic link lands on `localhost:3001` | Prod redirect URLs not added in Supabase (1.3.2) or Site URL still default |

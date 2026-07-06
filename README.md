@@ -157,7 +157,7 @@ runtime-scoped entry points — importing the wrong one is a build error by desi
 |---|---|
 | Server Components / Route Handlers | `@mazidi/auth/server`, `@mazidi/api` |
 | Client Components (`"use client"`) | `@mazidi/auth/client`, `@mazidi/api/schemas`, `@mazidi/ui` |
-| Edge middleware | `@mazidi/auth/middleware`, `@mazidi/config` |
+| Edge middleware | `@mazidi/auth/middleware`, `@mazidi/config` — NOTHING else; supabase/prisma are banned in edge graphs (checker rule 2) |
 
 Never re-export server modules from a barrel that client code imports.
 `node scripts/check-boundaries.mjs` enforces this statically (run it in CI).

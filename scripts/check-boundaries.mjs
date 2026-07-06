@@ -92,9 +92,10 @@ for (const f of files) {
     reach(f, ["next/headers", "@prisma/client", "@mazidi/db", "server-only"], `client graph (${path.relative(ROOT, f)})`);
   }
 }
-// 2. middleware graphs must not reach next/headers
+// 2. middleware (edge) graphs must not reach next/headers OR supabase —
+//    supabase-js releases have broken Edge at module scope (MIDDLEWARE_INVOCATION_FAILED)
 for (const f of files.filter((f) => f.endsWith(`middleware.ts`) && f.includes("apps"))) {
-  reach(f, ["next/headers"], `edge graph (${path.relative(ROOT, f)})`);
+  reach(f, ["next/headers", "@supabase/ssr", "@supabase/supabase-js", "@mazidi/db", "@prisma/client"], `edge graph (${path.relative(ROOT, f)})`);
 }
 // 3. nobody imports the @mazidi/auth barrel
 for (const f of files) {
