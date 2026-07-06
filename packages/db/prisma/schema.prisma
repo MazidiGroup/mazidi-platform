@@ -5,10 +5,10 @@
 
 generator client {
   provider      = "prisma-client-js"
-  // Generate INTO this package (not the pnpm virtual store) so Vercel's file
-  // tracing can follow a plain relative path to the engine binary.
-  output        = "../generated/client"
-  // "native" = local dev (macOS); "rhel-openssl-3.0.x" = Vercel serverless runtime
+  // "native" = local dev (macOS); "rhel-openssl-3.0.x" = Vercel serverless runtime.
+  // Default output location + @prisma/nextjs-monorepo-workaround-plugin (each
+  // app's next.config) is the supported combination for bundled clients in
+  // pnpm monorepos — the plugin copies the engine beside the webpack output.
   binaryTargets = ["native", "rhel-openssl-3.0.x"]
 }
 

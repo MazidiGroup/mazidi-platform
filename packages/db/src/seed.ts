@@ -3,7 +3,7 @@
  * launch automation rules. Idempotent (upserts by slug/number).
  * Run: pnpm db:seed
  */
-import { PrismaClient, type Pillar, type PostKind } from "../generated/client";
+import { PrismaClient, type Pillar, type PostKind } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
