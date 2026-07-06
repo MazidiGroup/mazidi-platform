@@ -18,37 +18,51 @@ import { NextRequest, NextResponse } from "next/server";
 
 /** True if a Supabase auth-token cookie exists (incl. chunked `.0`, `.1`, …). */
 export function hasSupabaseSession(req: NextRequest): boolean {
-  return req.cookies
-    .getAll()
-    .some((c) => c.name.startsWith("sb-") && c.name.includes("-auth-token") && c.value.length > 0);
+  try {
+    return req.cookies
+      .getAll()
+      .some((c) => c.name.startsWith("sb-") && c.name.includes("-auth-token") && c.value.length > 0);
+  } catch {
+    // Malformed cookie jar (stale/oversized/legacy cookies) must never 500 the
+    // site. Treat as unauthenticated; server-side getUser() is the boundary.
+    return false;
+  }
 }
 
 export interface EdgeAuthConfig {
-  /** Where an already-authenticated user lands when visiting /login. */
-  homePath: string;
   /** Paths reachable without a session. Default: /login, /auth. */
   publicPaths?: string[];
 }
 
-/** Shared auth gate for portal / team / admin middleware. */
-export function edgeAuthGuard(req: NextRequest, cfg: EdgeAuthConfig): NextResponse {
-  const publicPaths = cfg.publicPaths ?? ["/login", "/auth"];
-  const { pathname } = req.nextUrl;
-  const authed = hasSupabaseSession(req);
-  const isPublic = publicPaths.some((p) => pathname.startsWith(p));
+/**
+ * Shared auth gate for portal / team / admin middleware.
+ * FAIL-OPEN by design: any unexpected per-request error passes the request
+ * through to the Node runtime, where every layout/page/route verifies the
+ * session anyway. A 500 here takes down every route; failing open costs one
+ * server-side redirect. (Cheap in Edge; possible only because this module has
+ * zero dependencies — import-time crashes can't be caught.)
+ */
+export function edgeAuthGuard(req: NextRequest, cfg: EdgeAuthConfig = {}): NextResponse {
+  try {
+    const publicPaths = cfg.publicPaths ?? ["/login", "/auth"];
+    const { pathname } = req.nextUrl;
+    const authed = hasSupabaseSession(req);
+    const isPublic = publicPaths.some((p) => pathname.startsWith(p));
 
-  if (!authed && !isPublic) {
-    const url = req.nextUrl.clone();
-    url.pathname = "/login";
-    url.search = "";
-    url.searchParams.set("next", pathname);
-    return NextResponse.redirect(url);
+    if (!authed && !isPublic) {
+      const url = req.nextUrl.clone();
+      url.pathname = "/login";
+      url.search = "";
+      url.searchParams.set("next", pathname);
+      return NextResponse.redirect(url);
+    }
+    // NOTE: no "authed → leave /login" redirect here. Cookie PRESENCE cannot
+    // prove validity, and redirecting on a stale cookie creates an infinite
+    // loop with the server-side check (/login → home → getUser() fails →
+    // /login → …). A signed-in user visiting /login just sees the form.
+    return NextResponse.next();
+  } catch (e) {
+    console.error("edgeAuthGuard failed open:", e);
+    return NextResponse.next();
   }
-  if (authed && pathname === "/login") {
-    const url = req.nextUrl.clone();
-    url.pathname = cfg.homePath;
-    url.search = "";
-    return NextResponse.redirect(url);
-  }
-  return NextResponse.next();
 }

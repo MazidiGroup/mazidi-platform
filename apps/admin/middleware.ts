@@ -3,7 +3,7 @@ import { edgeAuthGuard } from "@mazidi/auth/middleware";
 
 /** Edge auth gate — dependency-free; session VERIFICATION happens server-side. */
 export function middleware(req: NextRequest) {
-  return edgeAuthGuard(req, { homePath: "/overview" });
+  return edgeAuthGuard(req);
 }
 
 export const config = {
