@@ -7,7 +7,8 @@
     "build": "pnpm -w check:privacy && next build",
     "start": "next start",
     "lint": "next lint",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "screenshots": "node scripts/screenshot-privacy.mjs"
   },
   "dependencies": {
     "@mazidi/api": "workspace:*",
@@ -21,6 +22,7 @@
     "zod": "^3.24.1"
   },
   "devDependencies": {
+    "@playwright/test": "^1.62.0",
     "@prisma/nextjs-monorepo-workaround-plugin": "^6.2.1",
     "@types/node": "^22.10.5",
     "@types/react": "^19.0.2",
