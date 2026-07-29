@@ -41,7 +41,15 @@ export function Footer({ companies }: { companies: NavCompany[] }) {
         </div>
         <div className="flex flex-wrap items-center justify-between gap-5 border-t border-line pt-7 text-[.8rem] text-t3">
           <span>© {new Date().getFullYear()} Mazidi Group Ltd. All rights reserved.</span>
-          <span>Privacy · Terms · Cookies · GDPR &amp; UAE PDPL compliant</span>
+          <span className="flex flex-wrap items-center gap-x-1.5 gap-y-1">
+            <Link href="/privacy" className="text-[.88rem] text-t2 transition-colors hover:text-gold">Privacy</Link>
+            <span aria-hidden>·</span>
+            <Link href="/privacy/request" className="text-[.88rem] text-t2 transition-colors hover:text-gold">Privacy Requests</Link>
+            <span aria-hidden>·</span>
+            <Link href="/privacy/complaints" className="text-[.88rem] text-t2 transition-colors hover:text-gold">Complaints</Link>
+            <span aria-hidden>·</span>
+            <span>Terms · Cookies · GDPR &amp; UAE PDPL compliant</span>
+          </span>
         </div>
       </Container>
     </footer>
