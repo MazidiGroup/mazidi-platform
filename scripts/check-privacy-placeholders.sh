@@ -12,7 +12,10 @@
 set -uo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-TARGET="$ROOT/apps/web/app/(group)/privacy"
+# The pages moved out of the (group) route group when the privacy centre was
+# scoped to the MazidiPerformance subdomain; they now live under the internal
+# /app-privacy segment and are served at /privacy* by apps/web/middleware.ts.
+TARGET="$ROOT/apps/web/app/app-privacy/privacy"
 
 if [ ! -d "$TARGET" ]; then
   echo "check-privacy-placeholders: target directory not found: $TARGET" >&2

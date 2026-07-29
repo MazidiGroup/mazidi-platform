@@ -4,7 +4,7 @@
 **Prepared:** 29 July 2026
 **Prepared from:** source code only.
 **Purpose:** input to the UK GDPR privacy notice for MazidiPerformance
-(`apps/web/app/(group)/privacy/page.tsx`) and to the vendor/DPA/subprocessor registers in
+(`apps/web/app/app-privacy/privacy/page.tsx`) and to the vendor/DPA/subprocessor registers in
 `MazidiPerformance_Compliance_Register.xlsx`.
 
 ---
@@ -284,7 +284,7 @@ The only sync transports are `FakeSyncBackend` (`#if DEBUG`-wrapped) and the ine
 
 ## 3. Notice-versus-code gap analysis
 
-Section numbers below are as **published** (`apps/web/app/(group)/privacy/page.tsx`). Because
+Section numbers below are as **published** (`apps/web/app/app-privacy/privacy/page.tsx`). Because
 the Apple Health section (source §6) was removed, the published §6 = source §7 (sharing) and
 published §7 = source §8 (transfers). See `PRIVACY_WORDING_DIFF.md` §1.3.
 
@@ -465,7 +465,7 @@ Ordered by blocking severity. Items 1–6 are, in my assessment, genuine merge b
       **manual only** — add it to the release sequence, and add CI.
       **Note:** the guard greps for the literal string `TO BE CONFIRMED`. This inventory file
       lives at the repo root, **outside** the guard's target directory
-      (`apps/web/app/(group)/privacy/`), so it does not trip the check — verified.
+      (`apps/web/app/app-privacy/privacy/`), so it does not trip the check — verified.
 - [ ] **24.** Confirm **`privacy@mazidigroup.com` deliverability** end-to-end (already tracked
       in `PRIVACY_WORDING_DIFF.md` §8).
 - [ ] **25.** Confirm whether **cron-job.org** is actually in use (`DEPLOYMENT.md` Part 6.4).
