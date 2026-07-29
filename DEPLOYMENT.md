@@ -150,6 +150,20 @@ the domain.
      ```
      (generates the Prisma client before the Next build — without this the build fails
      with "Cannot find module '.prisma/client'").
+
+     > **The web project is the exception.** `apps/web/vercel.json` now sets its
+     > Build Command in the repo:
+     > ```
+     > pnpm -w check:privacy && pnpm -w db:generate && next build
+     > ```
+     > A `vercel.json` is read from the project's **Root Directory**, so this file
+     > applies to — and only to — the project whose Root Directory is `apps/web`. It
+     > has no effect on the portal, team, admin or portal-vlms projects. `vercel.json`
+     > takes precedence over the dashboard Build Command, so the dashboard override on
+     > the web project becomes inert; keep the two in step if you ever change either.
+     > The extra step is the privacy centre release guard (see §"Privacy centre
+     > release approvals" below) — it fails the build rather than publishing an
+     > unapproved privacy notice.
    - **Install Command:** leave default (Vercel detects pnpm from the lockfile and
      installs the whole workspace).
    - **Node.js version** (Settings → General after creation): 20.x.
@@ -168,6 +182,33 @@ Suggested project names: `mazidi-web`, `mazidi-portal`, `mazidi-team`, `mazidi-a
 Four projects, each with a working `*.vercel.app` preview URL. Portal/team/admin will
 redirect to `/login` — correct. The web app should render the group site. Don't test
 logins yet — SSO cookies need the real domain (next part).
+
+### 3.3 Privacy centre release approvals (web project only)
+
+The privacy centre (`mazidiperformance.mazidigroup.com/privacy*`) is a legal document, so
+it is gated by `pnpm check:privacy` — wired into the web build by `apps/web/vercel.json`
+and by the `build` script in `apps/web/package.json`. It runs on every build of the web
+project and on every PR (`.github/workflows/ci.yml`, job `verify`).
+
+**Preview builds** check content only: no draft version labels, no Apple Health/HealthKit
+claims, no in-app "delete account" instruction, no contact address other than
+`privacy@mazidigroup.com`, the controller named as `Mazidi Homes Limited`, all three routes
+present, and no unresolved `[…]` placeholders. The one exception is
+`[EFFECTIVE DATE — SET ON PUBLICATION]`, which preview may still show.
+
+**Production builds additionally require four human approvals**, set as environment
+variables in the web project's **Production** environment only. They are server-side and
+build-time — never `NEXT_PUBLIC_`, never read from a client component, never committed:
+
+| Variable | Value | Who sets it, and only after |
+|---|---|---|
+| `PRIVACY_EFFECTIVE_DATE` | the date, e.g. `29 July 2026` (strict `D MMMM YYYY`) | Privacy Lead — decides the date the notice takes effect. Substituted into the rendered page in place of the marker. |
+| `PRIVACY_MAILBOX_VERIFIED` | `true` | Privacy Lead — `privacy@mazidigroup.com` is proven to be a monitored mailbox with a named owner. |
+| `PRIVACY_VENDOR_REVIEW_APPROVED` | `true` | Privacy Lead + owner — `VENDOR_INVENTORY.md` reviewed and signed off. |
+| `PRIVACY_WORDING_APPROVED` | `true` | Legal reviewer — `PRIVACY_WORDING_DIFF.md` approved, including the owner-directed scope insertion. |
+
+Until all four are set the **production build fails**, naming the missing approval. That is
+the intended behaviour: nobody should set these on someone else's behalf.
 
 ---
 
