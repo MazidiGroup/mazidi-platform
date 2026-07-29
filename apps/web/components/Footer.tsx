@@ -40,7 +40,9 @@ export function Footer({ companies }: { companies: NavCompany[] }) {
           </div>
         </div>
         <div className="flex flex-wrap items-center justify-between gap-5 border-t border-line pt-7 text-[.8rem] text-t3">
-          <span>© {new Date().getFullYear()} Mazidi Group Ltd. All rights reserved.</span>
+          <span>
+            © {new Date().getFullYear()} Mazidi Homes Limited. MazidiGroup is a brand of Mazidi Homes Limited.
+          </span>
           <span className="flex flex-wrap items-center gap-x-1.5 gap-y-1">
             <Link href="/privacy" className="text-[.88rem] text-t2 transition-colors hover:text-gold">Privacy</Link>
             <span aria-hidden>·</span>
@@ -51,6 +53,10 @@ export function Footer({ companies }: { companies: NavCompany[] }) {
             <span>Terms · Cookies · GDPR &amp; UAE PDPL compliant</span>
           </span>
         </div>
+        <p className="mt-4 max-w-[640px] text-[.8rem] leading-relaxed text-t3">
+          Mazidi Homes Limited is registered in England and Wales under company number 15350516. Registered
+          office: Flat 55 Banstead Court, 60 Westway, London, England, W12 0QJ.
+        </p>
       </Container>
     </footer>
   );
