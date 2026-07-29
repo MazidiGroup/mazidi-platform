@@ -43,6 +43,10 @@ export default function PrivacyComplaintsPage() {
 
             <H2>How to complain</H2>
             <P>
+              For privacy questions, data-protection requests or complaints, contact us at{" "}
+              <Mail address="privacy@mazidigroup.com" />.
+            </P>
+            <P>
               Complaints may be made by email to <Mail address="privacy@mazidigroup.com" />, by post to{" "}
               {REGISTERED_OFFICE}, or through any future secure online form. Staff must recognise complaints
               received through support, social media or coaching channels and route them to the Privacy Lead

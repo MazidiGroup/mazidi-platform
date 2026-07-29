@@ -255,9 +255,137 @@ not placeholders.
 
 ---
 
-## 6. Assertion
+## 6. Assertion (as at the initial implementation)
 
 Other than the deletions D1–D6, the substitutions S1–S9, the D5-driven renumbering and the
 markup-only changes in §4, **every clause on all three pages is byte-identical to the canonical
 source HTML**. No clause was paraphrased, shortened, expanded, re-ordered, re-punctuated or
 re-spelled. This was verified by an automated block-level text diff, not by reading.
+
+---
+
+## 7. Owner-approved amendments — 29 July 2026
+
+Four owner decisions applied to the branch after the review above. **Nothing else was
+changed**: no other clause on any of the three pages was paraphrased, shortened, expanded,
+re-ordered, re-punctuated or re-spelled.
+
+### 7.1 Decision 1 — defined terms restored (Privacy Notice §1)
+
+This closes the point flagged against **S1** above: the source's defined-terms parenthetical
+had been lost, while the notice continues to rely on "we"/"us"/"our" throughout. The owner
+supplied replacement wording, applied verbatim. §1 now opens with a single three-sentence
+paragraph; the first two sentences are the existing approved sentences unchanged (the second
+was previously the opening sentence of the controller paragraph below the contact list), and
+the third is the new owner-supplied definition.
+
+```
+OLD (§1 opening paragraph):
+  MazidiPerformance is a service operated by Mazidi Homes Limited under the MazidiGroup brand.
+
+OLD (§1 controller paragraph, below the contact list):
+  Mazidi Homes Limited is the controller of the personal information described in this Privacy
+  Notice. Some coaches or corporate customers may have a different role. Any such arrangement
+  must be explained at the point of collection and documented contractually.
+
+NEW (§1 opening paragraph):
+  MazidiPerformance is a service operated by Mazidi Homes Limited under the MazidiGroup brand.
+  Mazidi Homes Limited is the controller of the personal information described in this Privacy
+  Notice. In this Privacy Notice, references to ‘MazidiGroup’, ‘MazidiPerformance’, ‘we’, ‘us’
+  and ‘our’ mean Mazidi Homes Limited, unless the context states otherwise.
+
+NEW (§1 paragraph below the contact list — remainder of the controller paragraph, verbatim):
+  Some coaches or corporate customers may have a different role. Any such arrangement must be
+  explained at the point of collection and documented contractually.
+```
+
+No other use of "we"/"us"/"our" anywhere in the notice was altered; the new sentence defines
+them all.
+
+### 7.2 Decision 2 — legal entity in the site footer
+
+A repo-wide search found exactly one true legal-entity reference —
+`apps/web/components/Footer.tsx`. Every other "Mazidi Group" occurrence is brand/marketing
+usage and was left untouched, including `apps/web/app/sites/[site]/layout.tsx`
+(`© {year} {company.name} · A Mazidi Group company`), which is tenant-site brand usage and
+explicitly out of scope.
+
+```
+OLD: © {new Date().getFullYear()} Mazidi Group Ltd. All rights reserved.
+NEW: © {new Date().getFullYear()} Mazidi Homes Limited. MazidiGroup is a brand of Mazidi Homes Limited.
+```
+
+Added below it, as separate small text in the same footer legal area (`text-[.8rem] text-t3`):
+
+```
+ADDED: Mazidi Homes Limited is registered in England and Wales under company number 15350516.
+       Registered office: Flat 55 Banstead Court, 60 Westway, London, England, W12 0QJ.
+```
+
+The year stays dynamic (`new Date().getFullYear()`) rather than hardcoded. The three privacy
+links in the footer are unchanged.
+
+### 7.3 Decision 4 — privacy mailbox wording
+
+The public privacy address is `privacy@mazidigroup.com` on all three pages.
+`hello@mazidigroup.com` appears nowhere.
+
+**Marker removed** (supersedes the second row of §5 "Remaining placeholders" above). The
+address is now defined, so the page no longer carries a deliverability caveat; deliverability
+testing remains a launch blocker tracked in the PR, not on the public page.
+
+```
+OLD (§1 contact list): Privacy contact: privacy@mazidigroup.com [PRIVACY CONTACT EMAIL — DELIVERABILITY TO BE CONFIRMED]
+NEW (§1 contact list): Privacy contact: privacy@mazidigroup.com
+```
+
+**Contact invitation.** The approved sentence is:
+
+```
+For privacy questions, data-protection requests or complaints, contact us at privacy@mazidigroup.com.
+```
+
+| Page | Placement |
+| --- | --- |
+| `/privacy` | §14 Contact — **replaced** the invitation line `Privacy questions, requests or complaints:`. The `Privacy Team – MazidiGroup` block, email, postal address, security and support lines below it are unchanged. |
+| `/privacy/complaints` | **Added** as the opening paragraph of "How to complain", immediately above the existing `Complaints may be made by email to …, by post to …, or through any future secure online form.` paragraph, which is retained verbatim. It was **not** replaced: doing so would have deleted the postal and future-online-form complaint routes, which no decision authorises. |
+| `/privacy/request` | **Not changed.** The page's only contact invitation is `Email privacy@mazidigroup.com from the email address associated with your account and include:` — a lead-in that governs the six-item list beneath it. Replacing it would orphan that list and delete the account-address verification instruction; adding the approved sentence directly above it would repeat the same address in consecutive sentences. The page already publishes the correct address and carries no marker. Flagged for the owner rather than guessed. |
+
+**DPO scan.** `DPO`, `Data Protection Officer` and `dpo@` were searched across all three
+pages: **zero hits**. Nothing asserts that a Data Protection Officer has been appointed, and
+nothing was removed on this ground.
+
+### 7.4 Decision 3 — effective date left as-is, guarded
+
+`[EFFECTIVE DATE — SET ON PUBLICATION]` on `/privacy/complaints` is **unchanged**. See the
+pre-deployment checklist below for the release guard that now enforces it.
+
+---
+
+## 8. Pre-deployment checklist
+
+**The privacy centre must not be deployed while `[EFFECTIVE DATE — SET ON PUBLICATION]`
+remains on `/privacy/complaints`.** Before release, replace that marker with the real
+production publication date, formatted like `29 July 2026`.
+
+A release guard enforces this:
+
+```bash
+pnpm check:privacy          # scripts/check-privacy-placeholders.sh
+```
+
+It greps `apps/web/app/(group)/privacy/` for `EFFECTIVE DATE — SET ON PUBLICATION`,
+`[APPROVAL DATE]`, `TO BE CONFIRMED`, `0.9`, `Apple Health` and `HealthKit`, prints every hit
+with file and line, and **exits non-zero** if any is found. It exits non-zero today, by
+design, because the effective-date marker is still present — the release fails while it
+remains.
+
+There is currently no `.github/workflows/` directory in this repo (deployment is Vercel-from-
+GitHub, per `DEPLOYMENT.md`), so there was no CI workflow to add a step to. Run
+`pnpm check:privacy` as part of the release sequence, and add it as a CI step when a workflow
+is introduced.
+
+- [ ] `[EFFECTIVE DATE — SET ON PUBLICATION]` replaced with the production publication date
+      (`29 July 2026` format)
+- [ ] `pnpm check:privacy` exits 0
+- [ ] `privacy@mazidigroup.com` deliverability confirmed (mailbox monitored, tested end to end)

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Container, Kicker, Section } from "@mazidi/ui";
-import { H2, H3, LI, LegalBody, LegalNav, Mail, P, Placeholder, TableWrap, TD, TH, UL } from "@/components/Legal";
+import { H2, H3, LI, LegalBody, LegalNav, Mail, P, TableWrap, TD, TH, UL } from "@/components/Legal";
 
 export const metadata: Metadata = {
   title: "Privacy Notice",
@@ -33,13 +33,15 @@ export default function PrivacyNoticePage() {
             <H2>1. Who we are</H2>
             <P>
               MazidiPerformance is a service operated by Mazidi Homes Limited under the MazidiGroup brand.
+              Mazidi Homes Limited is the controller of the personal information described in this Privacy
+              Notice. In this Privacy Notice, references to ‘MazidiGroup’, ‘MazidiPerformance’, ‘we’, ‘us’ and
+              ‘our’ mean Mazidi Homes Limited, unless the context states otherwise.
             </P>
             <UL>
               <LI>Registered address: {REGISTERED_OFFICE}</LI>
               <LI>Company registration number: 15350516</LI>
               <LI>
-                Privacy contact: <Mail address="privacy@mazidigroup.com" />{" "}
-                <Placeholder>[PRIVACY CONTACT EMAIL — DELIVERABILITY TO BE CONFIRMED]</Placeholder>
+                Privacy contact: <Mail address="privacy@mazidigroup.com" />
               </LI>
               <LI>
                 Security contact: <Mail address="security@mazidigroup.com" />
@@ -49,9 +51,8 @@ export default function PrivacyNoticePage() {
               </LI>
             </UL>
             <P>
-              Mazidi Homes Limited is the controller of the personal information described in this Privacy
-              Notice. Some coaches or corporate customers may have a different role. Any such arrangement must
-              be explained at the point of collection and documented contractually.
+              Some coaches or corporate customers may have a different role. Any such arrangement must be
+              explained at the point of collection and documented contractually.
             </P>
 
             <H2>2. Scope and age</H2>
@@ -372,7 +373,10 @@ export default function PrivacyNoticePage() {
             </P>
 
             <H2>14. Contact</H2>
-            <P>Privacy questions, requests or complaints:</P>
+            <P>
+              For privacy questions, data-protection requests or complaints, contact us at{" "}
+              <Mail address="privacy@mazidigroup.com" />.
+            </P>
             <P>
               <strong>Privacy Team – MazidiGroup</strong>
             </P>
