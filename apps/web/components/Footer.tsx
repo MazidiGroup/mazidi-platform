@@ -5,7 +5,30 @@ import { Logo } from "./Logo";
 
 type NavCompany = { slug: string; name: string; pillar: string };
 
-export function Footer({ companies }: { companies: NavCompany[] }) {
+/**
+ * Which privacy notice, if any, this footer may link to.
+ *
+ * `"app"`  — the MazidiPerformance privacy centre applies on this host; link to
+ *            `/privacy`, `/privacy/request`, `/privacy/complaints`.
+ * `"none"` — default. The platform (apex/www) has no privacy notice of its own
+ *            yet, and the MazidiPerformance notice is app-scoped, so no privacy
+ *            link is rendered at all.
+ *
+ * The footer is a static server component inside an ISR layout, so it must not
+ * read the request host (that would force dynamic rendering of the whole
+ * marketing site). Which shell renders it is the signal instead: only
+ * `app/app-privacy/layout.tsx` — reachable only on the MazidiPerformance
+ * subdomain — passes `"app"`.
+ */
+type PrivacyLinks = "app" | "none";
+
+export function Footer({
+  companies,
+  privacyLinks = "none",
+}: {
+  companies: NavCompany[];
+  privacyLinks?: PrivacyLinks;
+}) {
   const col = (pillar: string) =>
     companies.filter((c) => c.pillar.toLowerCase() === pillar).slice(0, 6);
 
@@ -44,12 +67,26 @@ export function Footer({ companies }: { companies: NavCompany[] }) {
             © {new Date().getFullYear()} Mazidi Homes Limited. MazidiGroup is a brand of Mazidi Homes Limited.
           </span>
           <span className="flex flex-wrap items-center gap-x-1.5 gap-y-1">
-            <Link href="/privacy" className="text-[.88rem] text-t2 transition-colors hover:text-gold">Privacy</Link>
-            <span aria-hidden>·</span>
-            <Link href="/privacy/request" className="text-[.88rem] text-t2 transition-colors hover:text-gold">Privacy Requests</Link>
-            <span aria-hidden>·</span>
-            <Link href="/privacy/complaints" className="text-[.88rem] text-t2 transition-colors hover:text-gold">Complaints</Link>
-            <span aria-hidden>·</span>
+            {/*
+              TODO(#2): the platform (mazidigroup.com and www) has no privacy notice
+              of its own. The notice at /privacy is the MazidiPerformance app notice
+              and, by owner decision, must not be presented as the platform-wide one,
+              so on every host except the MazidiPerformance subdomain no privacy link
+              is rendered. This is deliberately an unresolved gap, not a placeholder
+              route: do not point these links at the app notice, and do not invent a
+              platform notice. Resolve by publishing a platform privacy notice under
+              issue #2 and rendering it here for privacyLinks === "none".
+            */}
+            {privacyLinks === "app" && (
+              <>
+                <Link href="/privacy" className="text-[.88rem] text-t2 transition-colors hover:text-gold">Privacy</Link>
+                <span aria-hidden>·</span>
+                <Link href="/privacy/request" className="text-[.88rem] text-t2 transition-colors hover:text-gold">Privacy Requests</Link>
+                <span aria-hidden>·</span>
+                <Link href="/privacy/complaints" className="text-[.88rem] text-t2 transition-colors hover:text-gold">Complaints</Link>
+                <span aria-hidden>·</span>
+              </>
+            )}
             <span>Terms · Cookies · GDPR &amp; UAE PDPL compliant</span>
           </span>
         </div>

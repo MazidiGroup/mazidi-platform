@@ -3,11 +3,22 @@
 Compares the **rendered visible text** of the three new App Router pages against the canonical
 legal source HTML, clause by clause.
 
+> **⚠ UNAPPROVED INSERTION PENDING LEGAL APPROVAL.** §9 records an owner-directed **addition**
+> to the approved legal source — a scope-limitation sentence that exists in no source document.
+> It is live on the branch and **must be approved before publication**.
+
+> **Notice scope (routing).** This is the **MazidiPerformance app notice**, not a MazidiGroup
+> platform notice. It is served only on `mazidiperformance.mazidigroup.com/privacy*`.
+> `mazidigroup.com/privacy` and `www.mazidigroup.com/privacy` deliberately **404** — see §10.
+
 | Page | Source of record | Implemented at |
 | --- | --- | --- |
-| Privacy Notice | `compliance/website/privacy/index.html` | `apps/web/app/(group)/privacy/page.tsx` |
-| Privacy Requests | `compliance/website/privacy/request/index.html` | `apps/web/app/(group)/privacy/request/page.tsx` |
-| Data Protection Complaints | `compliance/website/privacy/complaints/index.html` | `apps/web/app/(group)/privacy/complaints/page.tsx` |
+| Privacy Notice | `compliance/website/privacy/index.html` | `apps/web/app/app-privacy/privacy/page.tsx` |
+| Privacy Requests | `compliance/website/privacy/request/index.html` | `apps/web/app/app-privacy/privacy/request/page.tsx` |
+| Data Protection Complaints | `compliance/website/privacy/complaints/index.html` | `apps/web/app/app-privacy/privacy/complaints/page.tsx` |
+
+The pages previously lived under `apps/web/app/(group)/privacy/…`. Only their file location and
+the hosts that serve them changed (§10); **no wording changed as part of the move**.
 
 ## Method
 
@@ -374,7 +385,7 @@ A release guard enforces this:
 pnpm check:privacy          # scripts/check-privacy-placeholders.sh
 ```
 
-It greps `apps/web/app/(group)/privacy/` for `EFFECTIVE DATE — SET ON PUBLICATION`,
+It greps `apps/web/app/app-privacy/privacy/` for `EFFECTIVE DATE — SET ON PUBLICATION`,
 `[APPROVAL DATE]`, `TO BE CONFIRMED`, `0.9`, `Apple Health` and `HealthKit`, prints every hit
 with file and line, and **exits non-zero** if any is found. It exits non-zero today, by
 design, because the effective-date marker is still present — the release fails while it
@@ -389,3 +400,125 @@ is introduced.
       (`29 July 2026` format)
 - [ ] `pnpm check:privacy` exits 0
 - [ ] `privacy@mazidigroup.com` deliverability confirmed (mailbox monitored, tested end to end)
+- [ ] **§9 scope sentence approved by legal** — it is an addition to the approved source
+
+---
+
+## 9. ⚠ Owner-directed INSERTION — 29 July 2026 — REQUIRES APPROVAL
+
+**This is the only change in this document that adds text which appears in no source
+document.** Every earlier entry either removed source text, or substituted owner-supplied
+wording for a bracketed placeholder. This one inserts a new clause into the notice.
+
+### 9.1 The inserted text
+
+Added to `/privacy` as its own short paragraph, **immediately after the `Last updated: 29 July
+2026` line and immediately before `1. Who we are`** — i.e. before the numbered clauses begin, so
+no existing clause is opened, closed, renumbered or otherwise disturbed. (The alternative
+placement considered was "at the very start of §1"; it was rejected because §1 is titled *Who we
+are* and its opening paragraph is the identity/defined-terms paragraph settled under Decision 1
+in §7.1 — pushing a scope statement into it would both muddle that clause's subject and
+re-open text that was separately approved. A standalone paragraph above §1 changes nothing
+inside any approved clause.)
+
+```
+ADDED (verbatim, as directed):
+This Privacy Notice applies to the MazidiPerformance coaching application and related
+MazidiPerformance services. It does not apply to other MazidiGroup websites, portals or
+services where a separate privacy notice is provided.
+```
+
+Rendered exactly as above, in the same `<P>` body style as the surrounding text. In the source
+file it is preceded by a comment marking it as an owner-directed insertion pending approval.
+
+### 9.2 Why it needs approval
+
+- It is **new legal wording**, not a placeholder resolution. Nothing in
+  `compliance/website/privacy/index.html` corresponds to it.
+- It makes a **scope representation to data subjects** — that other MazidiGroup properties are
+  covered by a separate notice. Today **no such platform notice exists** (tracked as issue #2,
+  see §10.4). Until one is published, the second sentence describes an intended state, not an
+  existing one. Counsel should confirm the wording is acceptable in that interim, since the
+  clause is conditional ("where a separate privacy notice is provided") and arguably reads
+  correctly either way — but that judgement is not ours to make.
+- It interacts with §2 *Scope and age*, which already describes what the notice covers ("the
+  MazidiPerformance iOS app, related web pages, coaching services, customer support and
+  connected integrations"). The two are consistent, but §2 is now no longer the only scope
+  statement on the page. Counsel should confirm they do not want the two merged.
+
+### 9.3 What was NOT changed
+
+No surrounding clause was altered. The `Last updated` line, §1 and §2 are byte-identical to
+their state as recorded in §6/§7. No other page (`/privacy/request`, `/privacy/complaints`)
+was touched.
+
+---
+
+## 10. Routing scope correction — 29 July 2026 (owner decision)
+
+The privacy centre is the **MazidiPerformance app notice** and must **not** serve as the
+platform-wide notice for `mazidigroup.com`. Before this change the pages sat inside the
+`(group)` route group and, because the middleware passed apex/www through untouched, they were
+served at `mazidigroup.com/privacy` as well as on the app subdomain.
+
+### 10.1 Where the pages now live
+
+`apps/web/app/(group)/privacy/…` → `apps/web/app/app-privacy/privacy/…` (git-tracked move; page
+content unchanged apart from §9). `apps/web/app/app-privacy/layout.tsx` replicates the
+`(group)` shell — `listLiveCompanies()` + `<Header>` / `<Footer>` + `revalidate = 300` — so the
+pages keep the site chrome.
+
+### 10.2 How they are served
+
+| Host | `/privacy*` | `/app-privacy/*` |
+| --- | --- | --- |
+| `mazidiperformance.mazidigroup.com` | rewritten to `/app-privacy/privacy*` — **serves the notice** | 404 |
+| `mazidigroup.com`, `www.mazidigroup.com` | **404** (no such route) | **404** (middleware) |
+| `{tenant}.mazidigroup.com` | unchanged tenant behaviour | 404 |
+| `localhost`, `*.localhost`, `*.vercel.app` (non-production deployments) | serves the notice, for review | serves the notice |
+
+`mazidiperformance` is registered in `packages/config/src/index.ts` as `APP_SUBDOMAINS`, kept
+**separate from `TENANT_SLUGS`** — it is not a tenant company and has no `Company.slug` row.
+The tenant engine is unchanged: the app-subdomain branch runs before it and returns, and every
+other host takes the identical code path it took before.
+
+### 10.3 Preview and local review
+
+Vercel preview deployments are served from `*.vercel.app`, not from the app subdomain, so
+without a mechanism the pages would be unreviewable. `apps/web/middleware.ts` therefore treats
+`localhost`, `*.localhost`, `127.0.0.1` and `*.vercel.app` as **review hosts** and serves the
+privacy centre there at `/privacy*`, exactly as on the app subdomain. The gate is
+`process.env.VERCEL_ENV !== "production"`, so the production deployment's own `*.vercel.app`
+alias does **not** serve it. Neither the apex nor `www` can ever match a review host — those
+are literal `mazidigroup.com` / `www.mazidigroup.com` — so the owner requirement holds
+independently of environment variables.
+
+`apps/web/app/robots.ts` disallows `/app-privacy` so the internal path cannot be indexed.
+
+### 10.4 Footer — owner decision 6
+
+`apps/web/components/Footer.tsx` is shared site-wide and previously linked Privacy / Privacy
+Requests / Complaints from **every** host, including the apex. It now takes a
+`privacyLinks?: "app" | "none"` prop defaulting to `"none"`:
+
+- `app/app-privacy/layout.tsx` passes `"app"` — the privacy links render on the privacy centre,
+  which is reachable only on the MazidiPerformance subdomain (and review hosts).
+- `app/(group)/layout.tsx` passes nothing — **no privacy link is rendered on the platform
+  site.** The gap is deliberate and carries a `TODO(#2)` comment: no placeholder page was
+  invented, and the links were not left pointing at the app notice.
+
+The footer cannot read the request host, because it is a static server component inside an
+ISR layout (`revalidate = 300`) and `next/headers` would force the whole marketing site to
+render dynamically. Which shell renders it is the signal instead.
+
+**Known consequence, flagged rather than guessed:** the group marketing pages served on
+`mazidiperformance.mazidigroup.com` (home, `/about`, `/contact`, …) use the `(group)` shell and
+therefore show **no** privacy link either — only the privacy centre pages themselves link to it.
+Owner decision 6 says the links "may" point to `/privacy` on that subdomain, so this is
+permitted, but if a footer privacy link is wanted on every page of the app subdomain it needs
+either a host-aware layout (costing ISR on the marketing site) or a dedicated app-host shell.
+Not guessed here.
+
+The company-disclosure block and the
+`© {year} Mazidi Homes Limited. MazidiGroup is a brand of Mazidi Homes Limited.` line are
+unchanged and still render on **all** hosts — entity identification, not notice scope.

@@ -30,6 +30,16 @@ export default function PrivacyNoticePage() {
               <strong>Last updated:</strong> 29 July 2026
             </P>
 
+            {/*
+              Owner-directed scope insertion (29 July 2026) — see PRIVACY_WORDING_DIFF.md §9.
+              An ADDITION to the approved legal source; pending legal approval. Do not reword.
+            */}
+            <P>
+              This Privacy Notice applies to the MazidiPerformance coaching application and related
+              MazidiPerformance services. It does not apply to other MazidiGroup websites, portals or
+              services where a separate privacy notice is provided.
+            </P>
+
             <H2>1. Who we are</H2>
             <P>
               MazidiPerformance is a service operated by Mazidi Homes Limited under the MazidiGroup brand.

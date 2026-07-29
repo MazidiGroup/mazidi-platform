@@ -48,6 +48,32 @@ export const isTenantSlug = (s: string): s is TenantSlug =>
 /** Subdomains reserved for platform apps — never treated as tenants. */
 export const RESERVED_SUBDOMAINS = ["www", "portal", "team", "admin", "api"] as const;
 
+/**
+ * Subdomain labels belonging to a MazidiGroup *product app* rather than to a
+ * tenant company.
+ *
+ * These are deliberately NOT in `TENANT_SLUGS`: no `Company.slug` row is seeded
+ * for them in `@mazidi/db`, so the tenant engine must never rewrite them into
+ * `/sites/{slug}`. They exist so `apps/web` can serve pages that belong to one
+ * product and must not appear on the group site — currently the
+ * MazidiPerformance privacy centre, which is app-scoped by owner decision and
+ * is NOT the platform-wide notice for mazidigroup.com.
+ */
+export const APP_SUBDOMAINS = ["mazidiperformance"] as const;
+export type AppSubdomain = (typeof APP_SUBDOMAINS)[number];
+export const isAppSubdomain = (s: string): s is AppSubdomain =>
+  (APP_SUBDOMAINS as readonly string[]).includes(s);
+
+/**
+ * Internal route segment backing the MazidiPerformance privacy centre
+ * (`apps/web/app/app-privacy/privacy/…`).
+ *
+ * The public URL is `/privacy*` on `mazidiperformance.{ROOT_DOMAIN}`; the web
+ * middleware rewrites that onto `${APP_PRIVACY_PREFIX}/privacy*`. The prefix is
+ * an implementation detail and is 404'd on every non-review host.
+ */
+export const APP_PRIVACY_PREFIX = "/app-privacy";
+
 export const OFFICES = [
   { city: "London", country: "United Kingdom · HQ", live: true },
   { city: "Dubai", country: "United Arab Emirates · HQ", live: true },
