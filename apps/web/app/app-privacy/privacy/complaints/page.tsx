@@ -9,6 +9,24 @@ export const metadata: Metadata = {
 
 const REGISTERED_OFFICE = "Flat 55 Banstead Court, 60 Westway, London, England, W12 0QJ";
 
+/**
+ * Effective date of this procedure.
+ *
+ * Read at build time from PRIVACY_EFFECTIVE_DATE — a SERVER-SIDE build-time
+ * approval variable set by the Privacy Lead in the Vercel Production
+ * environment. It is deliberately not prefixed NEXT_PUBLIC_ and is read only
+ * here, in a server component, so the variable itself is never shipped to the
+ * browser; only the resolved date appears in the rendered page.
+ *
+ * The literal marker below is the fallback ON PURPOSE: it keeps
+ * `pnpm check:privacy` able to detect an unset date, and a production build
+ * fails rather than publishing the marker. `||` (not `??`) so an empty string
+ * counts as unset.
+ */
+const EFFECTIVE_DATE =
+  process.env.PRIVACY_EFFECTIVE_DATE || "[EFFECTIVE DATE — SET ON PUBLICATION]";
+const EFFECTIVE_DATE_IS_SET = Boolean(process.env.PRIVACY_EFFECTIVE_DATE);
+
 export default function PrivacyComplaintsPage() {
   return (
     <>
@@ -31,7 +49,7 @@ export default function PrivacyComplaintsPage() {
             </P>
             <P>
               <strong>Effective date:</strong>{" "}
-              <Placeholder>[EFFECTIVE DATE — SET ON PUBLICATION]</Placeholder>
+              {EFFECTIVE_DATE_IS_SET ? EFFECTIVE_DATE : <Placeholder>{EFFECTIVE_DATE}</Placeholder>}
             </P>
 
             <H2>Purpose</H2>

@@ -12,7 +12,7 @@
     "db:seed": "pnpm --filter @mazidi/db seed",
     "env:link": "ln -sf ../../.env apps/web/.env.local && ln -sf ../../.env apps/portal/.env.local && ln -sf ../../.env apps/team/.env.local && ln -sf ../../.env packages/db/.env && ln -sf ../../.env apps/admin/.env.local",
     "check:boundaries": "node scripts/check-boundaries.mjs",
-    "check:privacy": "bash scripts/check-privacy-placeholders.sh"
+    "check:privacy": "node scripts/check-privacy-placeholders.mjs"
   },
   "devDependencies": {
     "turbo": "^2.3.3",

@@ -1,0 +1,91 @@
+name: CI
+
+# Runs on every pull request and on every push to the default branch.
+#
+# The job below is the gate for the privacy centre release guard. Mark the
+# check named "verify" as required in
+#   Settings → Branches → branch protection rule for `master` → Require status
+#   checks to pass → search for "verify"
+# (this workflow does not, and must not, configure branch protection itself).
+
+on:
+  pull_request:
+  push:
+    branches: [master]
+
+# Cancel superseded runs on the same ref — a PR only needs its latest commit checked.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: verify
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # pnpm version comes from the "packageManager" field in the root
+      # package.json (pnpm@9.15.0) — do not pin it separately here.
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+
+      # Node 20.x is the version this repo deploys on: DEPLOYMENT.md §3.1 sets
+      # "Node.js version: 20.x" for every Vercel project. There is no engines
+      # field or .nvmrc to read, so that document is the source of truth.
+      - name: Install Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20.x
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # ── Release guard ──────────────────────────────────────────────────
+      # VERCEL_ENV is unset here, so this runs with PREVIEW semantics: all
+      # content rules apply, and the effective-date marker is still permitted
+      # (it is resolved by PRIVACY_EFFECTIVE_DATE in the production build).
+      # The production-only approval flags are deliberately NOT set in CI —
+      # they are human sign-offs recorded in Vercel, never in this repo.
+      - name: Privacy centre release guard
+        run: pnpm check:privacy
+
+      - name: Import boundaries
+        run: pnpm check:boundaries
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      # Non-blocking: `pnpm lint` runs `next lint` in apps/web, but the repo has
+      # no ESLint configuration and no eslint dependency, so `next lint` drops
+      # into its interactive setup prompt and exits 1. That is pre-existing and
+      # unrelated to this change. The step is kept so the output is visible and
+      # so it starts gating as soon as ESLint is configured — at which point
+      # delete `continue-on-error` below.
+      - name: Lint (non-blocking — ESLint is not configured in this repo yet)
+        run: pnpm lint
+        continue-on-error: true
+
+      # NOTE — why the full production build is not run here.
+      #
+      # `pnpm build` prerenders marketing pages from the database at build time
+      # (DEPLOYMENT.md §3.1), so it fails during static collection without a
+      # real DATABASE_URL. That is pre-existing. We will not fake a database or
+      # put any credential in this workflow, so the build is not run in CI; the
+      # steps above are the furthest useful point that needs no secrets.
+      #
+      # Vercel still builds the real thing on every push, and the privacy guard
+      # is wired into that build via apps/web/vercel.json and the `build` script
+      # in apps/web/package.json — so a production deploy is blocked by the same
+      # check even though CI cannot run it.
+      #
+      # To make the build itself gate here, give the repo a CI-only throwaway
+      # Postgres (a service container plus a DATABASE_URL secret) and add a
+      # `pnpm build` step. That is a deliberate decision for the owner, not
+      # something this workflow should assume.
