@@ -20,6 +20,8 @@ Architecture source of truth: `../docs/01–05`. Phase 2's `../index.html` is a 
 | Admin control plane: tenant CRUD (DRAFT→LIVE), services, users & RBAC (auto Employee profile on staff grant), system analytics, AuditLog on every mutation | `apps/admin` (:3003), `packages/api/src/services/admin.ts` | ✅ |
 | Automation engine: outbox consumer, rule matching (event/company/occurrence/amount), recommend → Notification, crm.createLead, AutomationRun log, admin rules UI + cron/n8n drain endpoint | `packages/api/src/services/automations.ts`, `apps/admin` | ✅ |
 | AI assistants: portal Business Advisor + team CRM Assistant — real OpenAI, DB-grounded context, persisted AIConversation | `packages/api/src/services/ai.ts`, `/advisor`, `/assistant` | ✅ |
+| Event bridge: signed ingest from the MongoDB fitness apps → OutboxEvent, idempotent on externalId, cross-repo contract check | `packages/api/src/services/events.ts`, `apps/admin/app/api/events/ingest`, `scripts/check-event-contract.mjs` | ✅ |
+| Automation drain scheduled every 5 min (Vercel Cron) | `apps/admin/vercel.json` | ✅ |
 
 ## Setup
 
