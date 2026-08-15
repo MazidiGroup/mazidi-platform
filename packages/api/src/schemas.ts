@@ -146,3 +146,60 @@ export const automationToggleSchema = z.object({
   enabled: z.boolean(),
 });
 export type AutomationToggleInput = z.infer<typeof automationToggleSchema>;
+
+// ── Event bridge (inbound from the MongoDB fitness apps) ─
+// The two fitness products run on their own MongoDB instances and cannot see
+// this database. They POST domain events to /api/events/ingest, which turns
+// them into OutboxEvent rows for the existing automation engine to drain.
+
+/**
+ * Closed vocabulary. An unrecognised event name means the caller and this
+ * deployment disagree — a deploy-skew bug, not data — so reject it rather than
+ * storing something no rule will ever match.
+ * Keep in sync with EVENT_COMPANY in services/events.ts.
+ */
+export const INGEST_EVENTS = [
+  "coach.signed_up",
+  "coach.activated",
+  "coach.client_added",
+  "coach.went_inactive",
+  "coach.subscription_started",
+  "coach.subscription_cancelled",
+  "consumer.premium_started",
+  "consumer.premium_cancelled",
+  "consumer.daily_rollup",
+] as const;
+export type IngestEvent = (typeof INGEST_EVENTS)[number];
+
+export const INGEST_SOURCES = ["fitness_muscle_coach", "musclemapai"] as const;
+export type IngestSource = (typeof INGEST_SOURCES)[number];
+
+/**
+ * POST /api/events/ingest — machine-to-machine, shared-secret authenticated.
+ *
+ * .strict() on the envelope so an unknown top-level key is an error rather than
+ * silently dropped: a caller sending "custmerId" should find out immediately.
+ * `data` stays permissive — it is per-event freeform and is stored as sent.
+ */
+export const eventIngestSchema = z
+  .object({
+    source: z.enum(INGEST_SOURCES),
+    event: z.enum(INGEST_EVENTS),
+    /**
+     * Stable dedupe key, "<source>:<native-id>". MUST derive from the
+     * underlying fact (RevenueCat transaction id, Mongo user_id) — never a
+     * timestamp or a UUID generated at send time, or retries will not dedupe.
+     */
+    externalId: z.string().min(3).max(200),
+    occurredAt: z.string().datetime(),
+    actor: z
+      .object({
+        email: z.string().email().optional(),
+        name: z.string().max(200).optional(),
+        externalUserId: z.string().max(200).optional(),
+      })
+      .optional(),
+    data: z.record(z.unknown()).default({}),
+  })
+  .strict();
+export type EventIngestInput = z.infer<typeof eventIngestSchema>;

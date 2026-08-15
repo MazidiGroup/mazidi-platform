@@ -21,6 +21,8 @@ export {
   PILLAR_VALUES, COMPANY_STATUSES, GRANTABLE_ROLES,
   aiChatSchema, type AiChatInput,
   automationToggleSchema, type AutomationToggleInput,
+  eventIngestSchema, type EventIngestInput,
+  INGEST_EVENTS, INGEST_SOURCES, type IngestEvent, type IngestSource,
 } from "./schemas";
 export { listLiveCompanies, getCompanyBySlug, listPosts, listFeaturedTestimonials } from "./services/companies";
 export { captureLead, LeadCaptureError } from "./services/leads";
@@ -46,4 +48,5 @@ export {
   type AdminContext,
 } from "./services/admin";
 export { runAutomations, listAutomationRules, toggleAutomationRule } from "./services/automations";
+export { ingestEvent, EventIngestError } from "./services/events";
 export { AIError, advisorChat, teamAssistantChat, getConversation } from "./services/ai";
