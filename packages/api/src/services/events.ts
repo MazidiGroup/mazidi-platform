@@ -33,7 +33,10 @@ const EVENT_COMPANY: Record<string, string> = {
   "coach.subscription_started": "coachapp",
   "coach.subscription_cancelled": "coachapp",
   "consumer.premium_started": "gymapp",
+  "consumer.premium_cancellation_scheduled": "gymapp",
   "consumer.premium_cancelled": "gymapp",
+  "consumer.premium_renewed": "gymapp",
+  "consumer.billing_issue": "gymapp",
   "consumer.daily_rollup": "gymapp",
 };
 

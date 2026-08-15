@@ -166,7 +166,16 @@ export const INGEST_EVENTS = [
   "coach.subscription_started",
   "coach.subscription_cancelled",
   "consumer.premium_started",
+  // RevenueCat CANCELLATION: auto-renew switched off. The user KEEPS access
+  // until the period ends. This is a churn-risk signal, not a churn event —
+  // conflating it with premium_cancelled would tell the CRM someone left while
+  // they are still paying, and would fire win-back automation at a live
+  // subscriber.
+  "consumer.premium_cancellation_scheduled",
+  // RevenueCat EXPIRATION: access has actually ended.
   "consumer.premium_cancelled",
+  "consumer.premium_renewed",
+  "consumer.billing_issue",
   "consumer.daily_rollup",
 ] as const;
 export type IngestEvent = (typeof INGEST_EVENTS)[number];
