@@ -171,3 +171,47 @@ async function resolveCustomer(email: string, name?: string): Promise<string> {
     throw e;
   }
 }
+
+// ── Entitlement lookup (outbound: coach app asks us) ─────
+
+/**
+ * Does this email hold an active subscription to a given service?
+ *
+ * fitness_muscle_coach bills through this platform rather than running its own
+ * Stripe integration, so it needs to ask us whether a coach is paid. Read-only,
+ * shared-secret authenticated, and deliberately narrow: it answers one boolean
+ * plus a start date, never returns customer records or subscription internals.
+ */
+export async function getEntitlement(email: string, planSlug: string) {
+  const user = await prisma.user.findUnique({
+    where: { email: email.trim().toLowerCase() },
+    select: { customer: { select: { id: true } } },
+  });
+  if (!user?.customer) return { paid: false, plan: planSlug, since: null };
+
+  const service = await prisma.service.findFirst({
+    where: { slug: planSlug },
+    select: { id: true },
+  });
+  if (!service) return { paid: false, plan: planSlug, since: null };
+
+  // "active" and "trialing" both entitle. Stripe also emits past_due, which
+  // deliberately still entitles: dunning is in progress and cutting access on
+  // the first failed charge loses customers who would have paid on retry.
+  const sub = await prisma.subscription.findFirst({
+    where: {
+      customerId: user.customer.id,
+      serviceId: service.id,
+      status: { in: ["active", "trialing", "past_due"] },
+    },
+    orderBy: { renewsAt: "desc" },
+    select: { status: true, renewsAt: true },
+  });
+
+  return {
+    paid: sub !== null,
+    plan: planSlug,
+    since: sub?.renewsAt?.toISOString() ?? null,
+    status: sub?.status ?? null,
+  };
+}

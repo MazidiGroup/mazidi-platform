@@ -48,5 +48,5 @@ export {
   type AdminContext,
 } from "./services/admin";
 export { runAutomations, listAutomationRules, toggleAutomationRule } from "./services/automations";
-export { ingestEvent, EventIngestError } from "./services/events";
+export { ingestEvent, getEntitlement, EventIngestError } from "./services/events";
 export { AIError, advisorChat, teamAssistantChat, getConversation } from "./services/ai";
