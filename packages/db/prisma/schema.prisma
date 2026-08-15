@@ -620,6 +620,11 @@ model OutboxEvent {
   payload     Json      @default("{}")
   processedAt DateTime?
   at          DateTime  @default(now())
+  /// Idempotency key for events pushed in from the MongoDB fitness apps:
+  /// "<source>:<native-id>", e.g. "musclemapai:sub_abc123". Null for events
+  /// written in-process by billing/team/admin. Unique, so a redelivered event
+  /// is a no-op instead of firing every matching rule a second time.
+  externalId  String?   @unique
 
   @@index([processedAt, at])
 }
