@@ -6,7 +6,8 @@
   "types": "src/index.ts",
   "scripts": {
     "typecheck": "tsc --noEmit",
-    "stripe:sync": "tsx src/scripts/sync-plans.ts"
+    "stripe:sync": "tsx src/scripts/sync-plans.ts",
+    "stripe:sync:dry": "tsx src/scripts/sync-plans.ts --dry-run"
   },
   "dependencies": {
     "@mazidi/db": "workspace:*",

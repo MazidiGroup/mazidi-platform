@@ -85,3 +85,17 @@ export const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? `https://${ROOT_DOMA
 export const PORTAL_URL = process.env.NEXT_PUBLIC_PORTAL_URL ?? `https://portal.${ROOT_DOMAIN}`;
 export const TEAM_URL = process.env.NEXT_PUBLIC_TEAM_URL ?? `https://team.${ROOT_DOMAIN}`;
 export const ADMIN_URL = process.env.NEXT_PUBLIC_ADMIN_URL ?? `https://admin.${ROOT_DOMAIN}`;
+
+/**
+ * Companies whose services are billed OUTSIDE Stripe.
+ *
+ * gymapp is MuscleMapAi, a consumer iOS app whose subscription is sold through
+ * the App Store and reconciled by RevenueCat. Its Service rows exist so the
+ * marketing site can render the catalogue — Service.priceFrom is display copy,
+ * not a chargeable price.
+ *
+ * Creating Stripe prices for these would produce a second, competing
+ * subscription for the same product, and selling an iOS subscription outside
+ * IAP breaches App Store review guidelines. stripe:sync skips them.
+ */
+export const EXTERNALLY_BILLED_COMPANY_SLUGS = ["gymapp"] as const;
