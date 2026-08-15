@@ -1,18 +1,20 @@
 /**
- * Creates a Stripe Product + monthly recurring Price for every Service that has
- * priceFrom set but no stripePriceId yet, then stores the price id.
- * Idempotent. Run after seeding:  pnpm --filter @mazidi/api stripe:sync
+ * Creates a Stripe Product + monthly recurring Price for every Service with a
+ * canonical billingPriceGbp and no stripePriceId yet, then stores the price id.
+ * Idempotent. Run:  pnpm --filter @mazidi/api stripe:sync
  *
- * Two things this does NOT do, both deliberate:
+ * Reads billingPriceGbp, NEVER priceFrom. priceFrom is marketing display copy —
+ * the site renders "from £950" — and billing it directly would sell a quoted
+ * retainer at its advertised floor. A service with no billingPriceGbp is not
+ * self-serve sellable and is skipped; that is the correct default.
  *
- * 1. It skips companies in EXTERNALLY_BILLED_COMPANY_SLUGS. gymapp is billed
- *    through the App Store via RevenueCat, so a Stripe price would be a second
- *    competing subscription for the same product.
+ * Also skips EXTERNALLY_BILLED_COMPANY_SLUGS entirely, as defence in depth:
+ * gymapp is billed through the App Store via RevenueCat, and a Stripe price
+ * there would be a second competing subscription for the same product.
  *
- * 2. It treats Service.priceFrom as the exact monthly charge. For services
- *    marketed as "from £X" that is a floor, not a price — a £950/mo SEO
- *    retainer sold at exactly £950 may not be what was intended. Pass --dry-run
- *    first and read the plan before creating anything in live mode.
+ * Always run --dry-run first. Stripe prices are immutable once created — the
+ * only correction is to archive and replace, and customers may have subscribed
+ * in between.
  */
 import Stripe from "stripe";
 import { prisma } from "@mazidi/db";
@@ -28,21 +30,30 @@ async function main() {
 
   const services = await prisma.service.findMany({
     where: {
-      priceFrom: { not: null },
+      billingPriceGbp: { not: null },
       stripePriceId: null,
       company: { slug: { notIn: [...EXTERNALLY_BILLED_COMPANY_SLUGS] } },
     },
     include: { company: { select: { name: true, slug: true } } },
   });
   if (services.length === 0) {
-    console.log("Nothing to sync — all priced services already have Stripe prices.");
+    console.log(
+      "Nothing to sync — no Service has a billingPriceGbp without a stripePriceId.\n" +
+        "Note: priceFrom is deliberately ignored. Set billingPriceGbp on a service\n" +
+        "to make it self-serve sellable.",
+    );
     return;
   }
 
   console.log(`Mode: ${live ? "LIVE" : "test"}${dryRun ? " (dry run)" : ""}`);
   console.log(`${services.length} service(s) to create:\n`);
   for (const s of services) {
-    console.log(`  ${s.company.slug}/${s.slug}  £${Number(s.priceFrom).toFixed(2)}/mo  ${s.name}`);
+    console.log(
+      `  ${s.company.slug}/${s.slug}  £${Number(s.billingPriceGbp).toFixed(2)}/mo  ${s.name}` +
+        (s.priceFrom !== null && Number(s.priceFrom) !== Number(s.billingPriceGbp)
+          ? `   (display "from £${Number(s.priceFrom).toFixed(2)}")`
+          : ""),
+    );
   }
   console.log();
 
@@ -65,12 +76,12 @@ async function main() {
     const price = await stripe.prices.create({
       product: product.id,
       currency: "gbp",
-      unit_amount: Math.round(Number(s.priceFrom) * 100),
+      unit_amount: Math.round(Number(s.billingPriceGbp) * 100),
       recurring: { interval: "month" },
       metadata: { serviceId: s.id },
     });
     await prisma.service.update({ where: { id: s.id }, data: { stripePriceId: price.id } });
-    console.log(`✓ ${s.company.slug}/${s.slug} → ${price.id} (£${s.priceFrom}/mo)`);
+    console.log(`✓ ${s.company.slug}/${s.slug} → ${price.id} (£${s.billingPriceGbp}/mo)`);
   }
   console.log(`Done — ${services.length} plan(s) created.`);
 }

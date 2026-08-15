@@ -201,7 +201,13 @@ model Service {
   name      String
   summary   String
   body      Json     @default("{}")
+  /// Marketing display price — renders as "from £X". NEVER billed from directly.
   priceFrom Decimal? @db.Decimal(12, 2)
+  /// Canonical billable price, £ per month. Null means the service is not
+  /// self-serve sellable and must be quoted. This is the ONLY field stripe:sync
+  /// reads: priceFrom is a floor for display copy, and charging it silently
+  /// would sell a "from £950" retainer at exactly £950.
+  billingPriceGbp Decimal? @db.Decimal(12, 2)
   /// Stripe recurring Price id — set by packages/api/src/scripts/sync-plans.ts
   stripePriceId String?
   /// service ids recommended when this one completes (automation input)

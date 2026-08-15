@@ -37,6 +37,7 @@ export const PILLARS: Record<PillarKey, PillarMeta> = {
 
 /** Registered tenant slugs — MUST match Company.slug rows seeded in @mazidi/db. */
 export const TENANT_SLUGS = [
+  "coachapp", "coachgrowth",
   "construction", "realestate", "formation", "architecture", "development", "tech",
   "accounting", "payroll", "hr", "it", "legal", "operations", "gymapp", "software",
   "marketing", "branding", "sales", "consulting", "investment", "education", "venture",

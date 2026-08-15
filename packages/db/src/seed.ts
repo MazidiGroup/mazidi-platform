@@ -26,6 +26,8 @@ const COMPANIES: SeedCompany[] = [
   { slug: "legal", name: "Mazidi Legal", pillar: "RUN", mono: "ML", accent: "run", desc: "Commercial legal services — contracts, disputes and governance without the mystery.", svcs: ["Contracts", "Commercial Law", "Disputes", "Governance"] },
   { slug: "operations", name: "Mazidi Operations", pillar: "RUN", mono: "MO", accent: "run", desc: "Business operations consulting — systems, processes and SOPs that scale.", svcs: ["Process Design", "SOPs", "Automation", "Outsourcing"] },
   { slug: "gymapp", name: "Mazidi Gym App", pillar: "RUN", mono: "GA", accent: "run", desc: "The all-in-one fitness platform — workouts, nutrition, AI coaching and wearables.", svcs: ["Workout Tracking", "Nutrition", "AI Coach", "Wearables"] },
+  { slug: "coachapp", name: "Mazidi Coach App", pillar: "RUN", mono: "CA", accent: "run", desc: "Coaching software for personal trainers — clients, programmes, check-ins and messaging in one place.", svcs: ["Coach Seat", "Client Management", "Programme Builder", "Check-Ins"] },
+  { slug: "coachgrowth", name: "Mazidi Coach Growth", pillar: "GROW", mono: "CG", accent: "grow", desc: "Done-for-you client acquisition for online coaches — qualified leads, booked calls, no ad guesswork.", svcs: ["Lead Generation", "Outreach Management", "Funnel Build", "Sales Support"] },
   { slug: "software", name: "Mazidi Software", pillar: "RUN", mono: "MS", accent: "run", desc: "Ready-to-run SaaS products for CRM, invoicing and business management.", svcs: ["CRM", "Invoicing", "Booking", "Analytics"] },
   { slug: "marketing", name: "Mazidi Marketing", pillar: "GROW", mono: "MM", accent: "grow", desc: "Full-service marketing agency — campaigns that compound into pipeline.", svcs: ["Paid Media", "SEO", "Content", "Social"] },
   { slug: "branding", name: "Mazidi Branding", pillar: "GROW", mono: "MB", accent: "grow", desc: "Brand strategy and identity for companies that want to be remembered.", svcs: ["Strategy", "Identity", "Guidelines", "Rebrands"] },
@@ -61,6 +63,10 @@ const AUTOMATION_RULES = [
   { name: "Payroll active → HR Services", trigger: { event: "customer.active", companySlug: "payroll" }, actions: [{ type: "recommend", companySlug: "hr" }] },
   { name: "Marketing deal won → Sales Consulting", trigger: { event: "deal.won", companySlug: "marketing" }, actions: [{ type: "recommend", companySlug: "sales" }] },
   { name: "Revenue threshold → Investment Advisory", trigger: { event: "customer.revenue_threshold", amountGte: 250000 }, actions: [{ type: "recommend", companySlug: "investment" }, { type: "crm.createLead", companySlug: "investment" }] },
+  // The coach flywheel: a lead-gen client is by definition a coach with clients
+  // to manage, and a software subscriber is a coach who wants more of them.
+  { name: "Coach Growth deal won → Coach App", trigger: { event: "deal.won", companySlug: "coachgrowth" }, actions: [{ type: "recommend", companySlug: "coachapp" }] },
+  { name: "Coach App active → Coach Growth", trigger: { event: "customer.active", companySlug: "coachapp" }, actions: [{ type: "recommend", companySlug: "coachgrowth" }, { type: "crm.createLead", companySlug: "coachgrowth" }] },
 ];
 
 const slugify = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
@@ -90,8 +96,10 @@ async function main() {
     }
   }
 
-  console.log("Setting plan prices (Stripe-billable services)…");
-  const PLAN_PRICES: [string, string, number][] = [
+  // DISPLAY prices — what the marketing site renders as "from £X". These are
+  // deliberately NOT billable: sync-plans reads billingPriceGbp only.
+  console.log("Setting display prices…");
+  const DISPLAY_PRICES: [string, string, number][] = [
     ["accounting", "bookkeeping", 149],
     ["payroll", "payroll-runs", 99],
     ["hr", "contracts", 129],
@@ -99,13 +107,34 @@ async function main() {
     ["marketing", "seo", 950],
     ["software", "crm", 49],
     ["gymapp", "workout-tracking", 9.99],
+    ["coachgrowth", "lead-generation", 300],
   ];
-  for (const [companySlug, serviceSlug, price] of PLAN_PRICES) {
+  for (const [companySlug, serviceSlug, price] of DISPLAY_PRICES) {
     const company = await prisma.company.findUnique({ where: { slug: companySlug } });
     if (!company) continue;
     await prisma.service.update({
       where: { companyId_slug: { companyId: company.id, slug: serviceSlug } },
       data: { priceFrom: price },
+    }).catch(() => console.warn(`  (skipped ${companySlug}/${serviceSlug})`));
+  }
+
+  // CANONICAL BILLING prices — the only thing sync-plans will turn into a real,
+  // immutable, customer-visible Stripe price. Adding a row here is a commercial
+  // decision, not a copy change.
+  //
+  // Deliberately short. Every other priced service is a quoted engagement whose
+  // priceFrom is a floor ("from £950"), and gymapp is App Store / RevenueCat and
+  // must never get a Stripe price.
+  console.log("Setting canonical billing prices…");
+  const BILLING_PRICES: [string, string, number][] = [
+    ["coachapp", "coach-seat", 49],
+  ];
+  for (const [companySlug, serviceSlug, price] of BILLING_PRICES) {
+    const company = await prisma.company.findUnique({ where: { slug: companySlug } });
+    if (!company) continue;
+    await prisma.service.update({
+      where: { companyId_slug: { companyId: company.id, slug: serviceSlug } },
+      data: { billingPriceGbp: price, priceFrom: price },
     }).catch(() => console.warn(`  (skipped ${companySlug}/${serviceSlug})`));
   }
 
