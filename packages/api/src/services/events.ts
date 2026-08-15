@@ -154,7 +154,10 @@ async function resolveCustomer(email: string, name?: string): Promise<string> {
       data: {
         id: userId,
         email: normalised,
-        fullName: name?.trim() || normalised.split("@")[0],
+        // noUncheckedIndexedAccess makes split()[0] string | undefined even
+        // though a split always yields at least one element. Fall through to
+        // the full address rather than asserting non-null.
+        fullName: name?.trim() || normalised.split("@")[0] || normalised,
         customer: { create: { orgName: name ?? null } },
       },
       select: { customer: { select: { id: true } } },
