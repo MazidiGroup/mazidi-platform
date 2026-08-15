@@ -198,9 +198,10 @@ export async function getEntitlement(email: string, planSlug: string) {
   });
   if (!service) return { paid: false, plan: planSlug, since: null };
 
-  // "active" and "trialing" both entitle. Stripe also emits past_due, which
-  // deliberately still entitles: dunning is in progress and cutting access on
-  // the first failed charge loses customers who would have paid on retry.
+  // active, trialing and past_due are all returned. past_due is reported as
+  // NOT paid but WITH its status and period end, so the caller can run its own
+  // grace window — the coach app keeps full access for a configured number of
+  // days after the failed period, then drops to read-only.
   const sub = await prisma.subscription.findFirst({
     where: {
       customerId: user.customer.id,
@@ -211,10 +212,16 @@ export async function getEntitlement(email: string, planSlug: string) {
     select: { status: true, renewsAt: true },
   });
 
+  // status and currentPeriodEnd are both returned so the caller can apply its
+  // OWN dunning policy. The coach app runs a grace window from the end of the
+  // period that failed to pay; baking that policy in here would make it a
+  // platform concern and require a deploy to tune.
   return {
-    paid: sub !== null,
+    paid: sub !== null && sub.status !== "past_due",
     plan: planSlug,
-    since: sub?.renewsAt?.toISOString() ?? null,
     status: sub?.status ?? null,
+    currentPeriodEnd: sub?.renewsAt?.toISOString() ?? null,
+    /** @deprecated use currentPeriodEnd — kept so an older caller keeps working */
+    since: sub?.renewsAt?.toISOString() ?? null,
   };
 }
