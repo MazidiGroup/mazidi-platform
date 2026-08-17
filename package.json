@@ -12,7 +12,8 @@
     "db:seed": "pnpm --filter @mazidi/db seed",
     "env:link": "ln -sf ../../.env apps/web/.env.local && ln -sf ../../.env apps/portal/.env.local && ln -sf ../../.env apps/team/.env.local && ln -sf ../../.env packages/db/.env && ln -sf ../../.env apps/admin/.env.local",
     "check:boundaries": "node scripts/check-boundaries.mjs",
-    "check:events": "node scripts/check-event-contract.mjs"
+    "check:events": "node scripts/check-event-contract.mjs",
+    "check:cron-auth": "node scripts/check-cron-auth.mjs"
   },
   "devDependencies": {
     "turbo": "^2.3.3",

@@ -10,8 +10,19 @@ import { requireAdmin, runAutomations } from "@mazidi/api";
  * Scheduled every 5 minutes by apps/admin/vercel.json; before that the engine
  * only ever ran when a human clicked the button.
  */
+/**
+ * Which secret this environment expects. Preview uses CRON_SECRET_PREVIEW —
+ * a Preview-scoped variable the owner can read — so the production
+ * CRON_SECRET stays Sensitive and unrotated. Deliberately no fallback in
+ * either direction: a preview without its own secret fails closed rather
+ * than borrowing production's, and production never accepts the preview one.
+ */
+function resolveCronSecret(env: NodeJS.ProcessEnv): string | null {
+  return (env.VERCEL_ENV === "preview" ? env.CRON_SECRET_PREVIEW : env.CRON_SECRET) || null;
+}
+
 function viaSharedSecret(req: NextRequest): boolean {
-  const expected = process.env.CRON_SECRET;
+  const expected = resolveCronSecret(process.env);
   if (!expected) return false;
 
   // Vercel Cron sends Authorization: Bearer <CRON_SECRET>; n8n / external cron
