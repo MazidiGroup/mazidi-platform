@@ -52,7 +52,7 @@ if (!process.env.DIRECT_URL && !process.env.DATABASE_URL) {
 
 console.log(`[ci-migrate] env=${env} ref=${ref} — applying pending migrations`);
 
-const r = spawnSync("pnpm", ["--filter", "@mazidi/db", "deploy"], {
+const r = spawnSync("pnpm", ["--filter", "@mazidi/db", "run", "deploy"], {
   cwd: ROOT,
   stdio: "inherit",
   env: process.env,
