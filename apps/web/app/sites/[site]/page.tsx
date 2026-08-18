@@ -7,6 +7,8 @@ import {
   pillarBg, pillarKey, Section, SectionHead,
 } from "@mazidi/ui";
 import { FAQ } from "@/components/FAQ";
+import { PortfolioGallery } from "@/components/PortfolioGallery";
+import { getSiteGallery, REVIEW_PROFILES } from "@/lib/gallery";
 
 export const revalidate = 300;
 
@@ -38,6 +40,9 @@ export default async function SitePage({ params }: { params: Promise<{ site: str
   if (!company) notFound();
   const key = pillarKey(company.pillar);
   const others = (await listLiveCompanies()).filter((c) => c.slug !== company.slug).slice(0, 3);
+  const gallery = getSiteGallery(company.slug);
+  const reviews = REVIEW_PROFILES[company.slug];
+  const projectCount = gallery ? new Set(gallery.images.map((i) => i.project)).size : 0;
 
   // JSON-LD per tenant (docs/05 §SEO)
   const jsonLd = {
@@ -110,6 +115,52 @@ export default async function SitePage({ params }: { params: Promise<{ site: str
           </div>
         </Container>
       </Section>
+
+      {/* Portfolio — static per-tenant gallery (only sites with photos) */}
+      {gallery && (
+        <Section className="pt-0">
+          <Container>
+            <div id="portfolio" className="scroll-mt-24" />
+            <SectionHead
+              kicker="Portfolio"
+              title="Completed projects, photographed honestly."
+            />
+            <p className="-mt-8 mb-10 max-w-[680px] text-t2">
+              {gallery.images.length} photos from {projectCount}+ completed projects across London —
+              full renovations, tiling, plastering and bespoke finish work. Every photo below is our
+              own work on a real client project.
+            </p>
+            <PortfolioGallery site={company.slug} categories={gallery.categories} images={gallery.images} />
+          </Container>
+        </Section>
+      )}
+
+      {/* Verified reviews — links out to the live review platform */}
+      {reviews && (
+        <Section className="pt-0">
+          <Container>
+            <div id="reviews" className="scroll-mt-24" />
+            <SectionHead kicker="Client satisfaction" title={`Rated ${reviews.rating}/10 on ${reviews.platform}.`} />
+            <div className="flex flex-wrap items-center gap-8 rounded-xl border border-line bg-bg2 p-10 max-sm:p-6">
+              <div>
+                <div className="font-display text-[3.2rem] font-medium leading-none text-gold">{reviews.rating}</div>
+                <div className="mt-1 text-[.8rem] uppercase tracking-[.1em] text-t3">out of 10</div>
+              </div>
+              <div className="min-w-[260px] flex-1">
+                <div className="mb-1.5 text-[.95rem] tracking-[2px] text-gold" aria-hidden>★★★★★</div>
+                <p className="max-w-[560px] text-[.92rem] text-t2">
+                  Every review on {reviews.platform} is from a verified client on a completed job —
+                  workmanship, reliability and tidiness, scored independently. Read all{" "}
+                  {reviews.reviewCount} reviews on our public profile.
+                </p>
+              </div>
+              <ButtonLink href={reviews.url} target="_blank" rel="noopener noreferrer">
+                Read our {reviews.platform} reviews <Arrow />
+              </ButtonLink>
+            </div>
+          </Container>
+        </Section>
+      )}
 
       {/* Pricing note + FAQ */}
       <Section className="pt-0">
