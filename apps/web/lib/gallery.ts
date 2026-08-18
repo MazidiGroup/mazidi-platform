@@ -42,8 +42,9 @@ export const REVIEW_PROFILES: Record<
 > = {
   construction: {
     platform: "Checkatrade",
-    url: "https://www.checkatrade.com/trades/HarisBuilders",
-    rating: "9.9",
-    reviewCount: 15,
+    url: "https://www.checkatrade.com/trades/bathroomsandtiletalent",
+    rating: "10",
+    reviewCount: 26,
+    memberSince: "4 years on Checkatrade",
   },
 };
