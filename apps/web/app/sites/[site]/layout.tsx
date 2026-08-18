@@ -4,6 +4,7 @@ import { getCompanyBySlug } from "@mazidi/api";
 import { PILLARS, PORTAL_URL, SITE_URL } from "@mazidi/config";
 import { CompanyLogo, Container, pillarBg, pillarKey } from "@mazidi/ui";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { getSiteGallery, REVIEW_PROFILES } from "@/lib/gallery";
 
 export const revalidate = 300;
 
@@ -53,7 +54,15 @@ export default async function SiteLayout({
             </div>
           </Link>
           <nav className="flex items-center gap-1 max-md:hidden" aria-label={`${company.name} navigation`}>
-            {[["", "Overview"], ["#services", "Services"], ["#pricing", "Pricing"], ["#faq", "FAQ"], ["/contact", "Contact"]].map(([suffix, label]) => (
+            {[
+              ["", "Overview"],
+              ["#services", "Services"],
+              ...(getSiteGallery(company.slug) ? [["#portfolio", "Portfolio"]] : []),
+              ...(REVIEW_PROFILES[company.slug] ? [["#reviews", "Reviews"]] : []),
+              ["#pricing", "Pricing"],
+              ["#faq", "FAQ"],
+              ["/contact", "Contact"],
+            ].map(([suffix, label]) => (
               <Link
                 key={label}
                 href={`/sites/${company.slug}${suffix}`}
