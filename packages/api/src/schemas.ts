@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { LEAD_INTEREST_VALUES } from "@mazidi/config";
 
 /** Shared by the public lead form (client) and /api/leads (server). */
 export const leadInputSchema = z.object({
@@ -8,7 +9,8 @@ export const leadInputSchema = z.object({
   // Shape-only: tenant existence is validated against the DB in captureLead —
   // admin-created tenants must work without touching the static edge allowlist.
   companySlug: z.string().regex(/^[a-z][a-z0-9-]{1,30}$/).optional(),
-  interest: z.enum(["build", "run", "grow", "unsure"]).default("unsure"),
+  /** Routes group-level enquiries to a company pipeline — see LEAD_INTERESTS in @mazidi/config. */
+  interest: z.enum(LEAD_INTEREST_VALUES).default("other"),
   message: z.string().max(4000).optional(),
   /** honeypot — must stay empty */
   website: z.string().max(0).optional(),

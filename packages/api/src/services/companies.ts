@@ -7,15 +7,16 @@ export async function listLiveCompanies(pillar?: Pillar) {
     where: { status: "LIVE", ...(pillar ? { pillar } : {}) },
     orderBy: [{ pillar: "asc" }, { name: "asc" }],
     select: {
-      id: true, slug: true, name: true, pillar: true, description: true, brand: true,
+      id: true, slug: true, name: true, pillar: true, tagline: true, description: true, brand: true,
       services: { orderBy: { sortOrder: "asc" }, select: { slug: true, name: true, summary: true } },
     },
   });
 }
 
+/** Slugs are stored lowercase; /sites/FitnessMuscleCoach and /sites/fitnessmusclecoach resolve the same tenant. */
 export async function getCompanyBySlug(slug: string) {
   return prisma.company.findFirst({
-    where: { slug, status: "LIVE" },
+    where: { slug: slug.toLowerCase(), status: "LIVE" },
     include: {
       services: { orderBy: { sortOrder: "asc" } },
       testimonials: { take: 3 },

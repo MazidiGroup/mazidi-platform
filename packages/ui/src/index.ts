@@ -1,7 +1,8 @@
 export { Button, ButtonLink, Arrow } from "./components/Button";
 export { Container, Section, Kicker, SectionHead, Lead } from "./components/Section";
 export { Card, Panel, Pill } from "./components/Card";
-export { CompanyCard, CompanyLogo, type CompanyCardData } from "./components/CompanyCard";
+export { CompanyCard, CompanyLogo, CompanyStatusChip, companyHref, type CompanyCardData } from "./components/CompanyCard";
+export { AppStoreBadge, AppleMark } from "./components/AppStoreBadge";
 export { PillarCard } from "./components/PillarCard";
 export { CTABand } from "./components/CTABand";
 export { KPICard } from "./components/KPICard";

@@ -7,3 +7,54 @@ html { scroll-behavior: smooth; }
 body { -webkit-font-smoothing: antialiased; transition: background .4s, color .4s; }
 
 .hero-grad { background: var(--hero-grad); }
+
+/* ── Home hero ─────────────────────────────────────────── */
+.hero-grid {
+  background-image:
+    linear-gradient(to right, var(--line) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--line) 1px, transparent 1px);
+  background-size: 64px 64px;
+  -webkit-mask-image: radial-gradient(ellipse 70% 60% at 50% 40%, #000 30%, transparent 100%);
+  mask-image: radial-gradient(ellipse 70% 60% at 50% 40%, #000 30%, transparent 100%);
+}
+@keyframes drift {
+  0%   { transform: translate3d(0, 0, 0) scale(1); }
+  50%  { transform: translate3d(40px, -30px, 0) scale(1.08); }
+  100% { transform: translate3d(0, 0, 0) scale(1); }
+}
+@keyframes drift2 {
+  0%   { transform: translate3d(0, 0, 0) scale(1); }
+  50%  { transform: translate3d(-50px, 40px, 0) scale(1.12); }
+  100% { transform: translate3d(0, 0, 0) scale(1); }
+}
+.orb { position: absolute; border-radius: 9999px; filter: blur(80px); pointer-events: none; will-change: transform; }
+.orb-a { animation: drift 18s ease-in-out infinite; }
+.orb-b { animation: drift2 24s ease-in-out infinite; }
+
+@keyframes rise {
+  from { opacity: 0; transform: translateY(18px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.rise { animation: rise .8s cubic-bezier(.22,1,.36,1) both; }
+.rise-1 { animation-delay: .05s; }
+.rise-2 { animation-delay: .18s; }
+.rise-3 { animation-delay: .32s; }
+.rise-4 { animation-delay: .46s; }
+
+/* Proof-point ticker */
+@keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+.marquee { display: flex; width: max-content; animation: marquee 48s linear infinite; }
+.marquee:hover { animation-play-state: paused; }
+
+/* Showcase progress bar */
+@keyframes fill { from { width: 0; } to { width: 100%; } }
+.fill { animation: fill var(--dur, 5s) linear both; }
+
+/* Horizontal photo strip */
+.strip { scrollbar-width: none; }
+.strip::-webkit-scrollbar { display: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  .orb-a, .orb-b, .marquee, .rise, .fill { animation: none !important; }
+  .rise { opacity: 1; transform: none; }
+}

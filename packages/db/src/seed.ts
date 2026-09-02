@@ -1,135 +1,142 @@
 /**
- * Seed — registers the 21 tenants with services, testimonials, insights and
- * launch automation rules. Idempotent (upserts by slug/number).
+ * Seed — registers the real Mazidi Group businesses with their services.
+ * Idempotent (upserts by slug). Companies that used to exist as placeholders
+ * are archived, never deleted, so historic rows keep their foreign keys.
+ * Public profile data (phones, websites, App Store links) lives in
+ * @mazidi/config COMPANY_PROFILES, not here.
  * Run: pnpm db:seed
  */
-import { PrismaClient, type Pillar, type PostKind } from "@prisma/client";
+import { PrismaClient, type Pillar } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
+type SeedService = { slug: string; name: string; summary: string; priceFrom?: number };
 type SeedCompany = {
   slug: string; name: string; pillar: Pillar; mono: string; accent: string;
-  desc: string; svcs: string[];
+  tagline: string; desc: string; domains: string[]; svcs: SeedService[];
 };
 
+/** Pillar meaning (see @mazidi/config): BUILD = Property & Construction, RUN = Apps, GROW = IT Services. */
 const COMPANIES: SeedCompany[] = [
-  { slug: "construction", name: "Mazidi Construction", pillar: "BUILD", mono: "MC", accent: "build", desc: "Design-and-build contracting for commercial and residential projects, delivered on time and on budget.", svcs: ["Commercial Build", "Residential", "Fit-Out", "Project Management"] },
-  { slug: "realestate", name: "Mazidi Real Estate", pillar: "BUILD", mono: "MR", accent: "build", desc: "Sales, lettings and property management across London and Dubai's prime markets.", svcs: ["Sales", "Lettings", "Property Management", "Advisory"] },
-  { slug: "formation", name: "Mazidi Formations", pillar: "BUILD", mono: "MF", accent: "build", desc: "Company formation in the UK and UAE — structure, registration, banking and compliance in days.", svcs: ["UK Ltd", "UAE Free Zone", "Banking", "Compliance"] },
-  { slug: "architecture", name: "Mazidi Architecture", pillar: "BUILD", mono: "MA", accent: "build", desc: "Award-calibre architecture and interior design for spaces that work as beautifully as they look.", svcs: ["Architecture", "Interiors", "Planning", "3D Visualisation"] },
-  { slug: "development", name: "Mazidi Development", pillar: "BUILD", mono: "MD", accent: "build", desc: "End-to-end property development — land, finance, build and exit.", svcs: ["Land Acquisition", "Development Finance", "New Builds", "Conversions"] },
-  { slug: "tech", name: "Mazidi Technology Studio", pillar: "BUILD", mono: "MT", accent: "build", desc: "Custom software, apps and platforms engineered for businesses that want to move fast.", svcs: ["Web Platforms", "Mobile Apps", "AI Solutions", "Integrations"] },
-  { slug: "accounting", name: "Mazidi Accounting", pillar: "RUN", mono: "MA", accent: "run", desc: "Accounting, tax and CFO services that keep you compliant and cash-smart.", svcs: ["Bookkeeping", "Tax", "VAT", "Fractional CFO"] },
-  { slug: "payroll", name: "Mazidi Payroll", pillar: "RUN", mono: "MP", accent: "run", desc: "Painless payroll for teams of 1 to 1,000 — accurate, on time, every time.", svcs: ["Payroll Runs", "Pensions", "P60s/WPS", "Compliance"] },
-  { slug: "hr", name: "Mazidi HR", pillar: "RUN", mono: "MH", accent: "run", desc: "HR services from contracts to culture — hire, manage and retain great people.", svcs: ["Contracts", "Recruitment", "Performance", "Employee Relations"] },
-  { slug: "it", name: "Mazidi IT Services", pillar: "RUN", mono: "MI", accent: "run", desc: "Managed IT, cloud and cybersecurity that keeps your business always-on.", svcs: ["Managed IT", "Cloud", "Cybersecurity", "Support Desk"] },
-  { slug: "legal", name: "Mazidi Legal", pillar: "RUN", mono: "ML", accent: "run", desc: "Commercial legal services — contracts, disputes and governance without the mystery.", svcs: ["Contracts", "Commercial Law", "Disputes", "Governance"] },
-  { slug: "operations", name: "Mazidi Operations", pillar: "RUN", mono: "MO", accent: "run", desc: "Business operations consulting — systems, processes and SOPs that scale.", svcs: ["Process Design", "SOPs", "Automation", "Outsourcing"] },
-  { slug: "gymapp", name: "Mazidi Gym App", pillar: "RUN", mono: "GA", accent: "run", desc: "The all-in-one fitness platform — workouts, nutrition, AI coaching and wearables.", svcs: ["Workout Tracking", "Nutrition", "AI Coach", "Wearables"] },
-  { slug: "software", name: "Mazidi Software", pillar: "RUN", mono: "MS", accent: "run", desc: "Ready-to-run SaaS products for CRM, invoicing and business management.", svcs: ["CRM", "Invoicing", "Booking", "Analytics"] },
-  { slug: "marketing", name: "Mazidi Marketing", pillar: "GROW", mono: "MM", accent: "grow", desc: "Full-service marketing agency — campaigns that compound into pipeline.", svcs: ["Paid Media", "SEO", "Content", "Social"] },
-  { slug: "branding", name: "Mazidi Branding", pillar: "GROW", mono: "MB", accent: "grow", desc: "Brand strategy and identity for companies that want to be remembered.", svcs: ["Strategy", "Identity", "Guidelines", "Rebrands"] },
-  { slug: "sales", name: "Mazidi Sales Consulting", pillar: "GROW", mono: "SC", accent: "grow", desc: "Sales systems, playbooks and training that turn conversations into contracts.", svcs: ["Sales Systems", "Playbooks", "Training", "CRM Setup"] },
-  { slug: "consulting", name: "Mazidi Consulting", pillar: "GROW", mono: "BC", accent: "grow", desc: "Business consulting for strategy, expansion and turnaround.", svcs: ["Strategy", "Expansion", "Turnaround", "M&A Readiness"] },
-  { slug: "investment", name: "Mazidi Investment Advisory", pillar: "GROW", mono: "IA", accent: "grow", desc: "Investment advisory and wealth strategy for founders and property investors.", svcs: ["Portfolio Strategy", "Property Investment", "Exit Planning", "Wealth"] },
-  { slug: "education", name: "Mazidi Business Education", pillar: "GROW", mono: "BE", accent: "grow", desc: "Courses, masterminds and executive education for ambitious operators.", svcs: ["Courses", "Masterminds", "Workshops", "Certification"] },
-  { slug: "venture", name: "Mazidi Venture Studio", pillar: "GROW", mono: "VS", accent: "grow", desc: "We co-found and invest in ventures built inside the Mazidi ecosystem.", svcs: ["Co-Founding", "Seed Capital", "Studio Support", "Exits"] },
+  {
+    slug: "mazidihomes", name: "Mazidi Homes", pillar: "BUILD", mono: "MH", accent: "build",
+    tagline: "Dubai off-plan, without the guesswork.",
+    desc: "A RERA-registered Dubai brokerage (ORN 47322) with research-grade pages for 670+ off-plan projects — real payment plans, true purchase costs and a licensed broker on WhatsApp.",
+    domains: ["mazidihomes.com", "www.mazidihomes.com"],
+    svcs: [
+      { slug: "off-plan-brokerage", name: "Off-Plan Brokerage", summary: "Buy direct from Dubai developers through a RERA-registered brokerage — launches, resales and allocations." },
+      { slug: "payment-plan-mapping", name: "Payment Plan Mapping", summary: "Every milestone mapped to an amount and a date before you commit." },
+      { slug: "true-cost-calculators", name: "True-Cost Calculators", summary: "DLD fees, Oqood, admin and service charges — the full number, not the headline price." },
+      { slug: "area-developer-guides", name: "Area & Developer Guides", summary: "85 areas and 300+ developers researched from the developer's own documents." },
+    ],
+  },
+  {
+    slug: "construction", name: "Mazidi Construction", pillar: "BUILD", mono: "MC", accent: "build",
+    tagline: "Bathrooms, kitchens and full renovations across West London.",
+    desc: "Bathroom and kitchen refits, Venetian plastering, carpentry and decorating — 28+ completed projects, every one photographed and rated 10/10 on Checkatrade.",
+    domains: ["construction.mazidigroup.com"],
+    svcs: [
+      { slug: "bathrooms-shower-rooms", name: "Bathrooms & Shower Rooms", summary: "Full bathroom and shower-room refits — strip-out, plumbing, tiling, fitting and finish — our most photographed work." },
+      { slug: "kitchens", name: "Kitchens", summary: "Kitchen installations, splashbacks and tiling, fitted to the millimetre." },
+      { slug: "venetian-plastering", name: "Venetian Plastering", summary: "Polished Venetian plaster walls and bathrooms — a specialist finish, done in-house." },
+      { slug: "carpentry", name: "Carpentry", summary: "Bespoke carpentry and joinery: built-ins, panelling, doors and finish work." },
+      { slug: "painting-decorating", name: "Painting & Decorating", summary: "Clean, tidy decorating that finishes every project properly." },
+      { slug: "tiling-exterior", name: "Tiling & Exterior", summary: "Wall and floor tiling, epoxy grout, and exterior works." },
+    ],
+  },
+  {
+    slug: "it", name: "Mazidi IT Services", pillar: "GROW", mono: "IT", accent: "grow",
+    tagline: "Could your business restore its computers tomorrow?",
+    desc: "Business backup and recovery for small offices: a backup box installed on your network, every computer copied to it, an optional offsite copy, and restores tested with you.",
+    domains: ["backup.mazidigroup.com"],
+    svcs: [
+      { slug: "business-backup-box", name: "Business Backup Box", summary: "Appliance, storage, every computer set up, version history and a restore test before we leave.", priceFrom: 1495 },
+      { slug: "backup-monitoring", name: "Backup Monitoring", summary: "We check backups are completing, follow up when they are not, and re-test restores periodically.", priceFrom: 39 },
+      { slug: "offsite-copy", name: "Offsite Copy", summary: "An optional second copy held elsewhere — what stands between you and starting again after theft, fire or ransomware." },
+      { slug: "free-backup-check", name: "Free Backup Check", summary: "Fifteen minutes, by phone or in person: what you have now, what would happen if a machine failed, and whether a restore has ever been tested." },
+    ],
+  },
+  {
+    slug: "musclemap", name: "Muscle Map", pillar: "RUN", mono: "MM", accent: "run",
+    tagline: "Train smarter. Understand every movement.",
+    desc: "Interactive muscle anatomy, AI coaching and workout tracking for iPhone, iPad and Apple Watch — see which muscles every exercise works and log your sets from your wrist.",
+    domains: ["musclemap.mazidigroup.com"],
+    svcs: [
+      { slug: "interactive-anatomy", name: "Interactive Anatomy", summary: "See which muscles each exercise activates on a detailed human body model." },
+      { slug: "apple-watch-logging", name: "Apple Watch Logging", summary: "Record sets and reps from your wrist without touching your phone." },
+      { slug: "ai-coaching", name: "AI Coaching", summary: "Personalised guidance that adapts to your goals and progress." },
+      { slug: "progress-tracking", name: "Progress Tracking", summary: "Log workouts, follow a weekly plan and watch strength and consistency grow." },
+    ],
+  },
+  {
+    slug: "fitnessmusclecoach", name: "Fitness Muscle Coach", pillar: "RUN", mono: "FC", accent: "run",
+    tagline: "Personal coaching, in your client's pocket.",
+    desc: "A personal coaching app with separate coach and client logins — programmes, check-ins, messaging and progress in one place. Submitted to the App Store and awaiting approval.",
+    domains: ["fitnessmusclecoach.mazidigroup.com"],
+    svcs: [
+      { slug: "coach-dashboard", name: "Coach Login", summary: "Manage every client, programme and check-in from one place." },
+      { slug: "client-app", name: "Client Login", summary: "Clients see their programme, log sessions and message their coach." },
+      { slug: "programme-builder", name: "Programme Builder", summary: "Build and assign training programmes in minutes." },
+      { slug: "check-ins-progress", name: "Check-Ins & Progress", summary: "Weekly check-ins, photos and metrics, tracked over time." },
+    ],
+  },
+  {
+    slug: "footballacademy", name: "Football Academy", pillar: "RUN", mono: "FA", accent: "run",
+    tagline: "Run your academy from one app.",
+    desc: "A football coaching app with coach and player logins — session plans, squads, attendance and player development tracking. Submitted to the App Store and awaiting approval.",
+    domains: ["footballacademy.mazidigroup.com"],
+    svcs: [
+      { slug: "coach-login", name: "Coach Login", summary: "Plan sessions, manage squads and record attendance." },
+      { slug: "player-login", name: "Player & Parent Login", summary: "Players and parents see sessions, feedback and development goals." },
+      { slug: "session-planning", name: "Session Planning", summary: "Drills, session plans and match-day squads in one place." },
+      { slug: "development-tracking", name: "Development Tracking", summary: "Track each player's progress across the season." },
+    ],
+  },
+  {
+    slug: "reraprep", name: "RERA Exam Prep Dubai", pillar: "RUN", mono: "RE", accent: "run",
+    tagline: "Pass the Dubai broker exam with the law beside every answer.",
+    desc: "120 original practice questions for the Dubai RERA broker licence, each explained and cited to the article of law it comes from, with timed mock exams that match the real paper. Works offline, no account needed.",
+    domains: ["reraprep.mazidigroup.com"],
+    svcs: [
+      { slug: "cited-questions", name: "Questions Cited to the Law", summary: "120 original questions, each explained with a source card naming the exact law and article." },
+      { slug: "timed-mock-exams", name: "Timed Mock Exams", summary: "30 questions in 30 minutes against a 75% pass mark — timed like the real paper." },
+      { slug: "review-mistakes", name: "Review Only What You Got Wrong", summary: "Wrong answers kept with what you said, what the law says, and the citation." },
+      { slug: "offline-no-account", name: "Offline, No Account", summary: "Study anywhere; progress stays on your device. No sign-up, no tracking." },
+    ],
+  },
 ];
 
-const TESTIMONIALS = [
-  { author: "Dr. Sarah Ahmed", role: "Founder, Nova Dental Clinics — London", quote: "Mazidi formed our company, built our clinic, runs our books and now manages our marketing. One team, one login, zero friction. It genuinely feels like having a group CFO, COO and CMO on call.", featured: true },
-  { author: "James Whitfield", role: "Director, Whitfield Estates", quote: "We came for the construction. We stayed for everything else. Every handover to the next Mazidi company was seamless — they already had our documents, our history, our context.", featured: true },
-  { author: "Layla Hassan", role: "CEO, Hassan Retail Group — Dubai", quote: "The portal alone is worth it. Invoices, contracts, project timelines and meetings for four different services — all in one dashboard. This is how business services should work.", featured: true },
-  { author: "Tom Okafor", role: "Founder, Okafor Logistics", quote: "They set up the company on Monday, the accounting stack by Friday, and the brand launch within the month. Speed like this is a competitive advantage.", featured: true },
+/** Former placeholder tenants — archived so their rows (and any FKs) survive. */
+const ARCHIVED = [
+  "realestate", "formation", "architecture", "development", "tech", "accounting", "payroll", "hr", "legal",
+  "operations", "gymapp", "software", "marketing", "branding", "sales", "consulting", "investment", "education",
+  "venture", "coachapp", "coachgrowth",
 ];
-
-const POSTS: { slug: string; kind: PostKind; title: string; excerpt: string; readMinutes: number }[] = [
-  { slug: "uk-uae-property-outlook-2026", kind: "REPORT", title: "UK & UAE Property Outlook 2026", excerpt: "Where yields, planning reform and off-plan demand are heading this year.", readMinutes: 12 },
-  { slug: "idea-to-2-4m-in-18-months", kind: "CASE_STUDY", title: "From idea to £2.4m revenue in 18 months", excerpt: "How one founder moved through five Mazidi companies from formation to expansion.", readMinutes: 8 },
-  { slug: "real-cost-of-inhouse-payroll", kind: "BLOG", title: "The real cost of running payroll in-house", excerpt: "The hidden hours, penalties and risk most SMEs never price in.", readMinutes: 5 },
-  { slug: "inside-the-mazidi-ecosystem", kind: "VIDEO", title: "Inside the Mazidi ecosystem: Build → Run → Grow", excerpt: "A 14-minute tour of how 21 companies behave like one.", readMinutes: 14 },
-  { slug: "freezone-vs-mainland-uae", kind: "BLOG", title: "Free zone vs mainland: choosing your UAE setup", excerpt: "Ownership, tax and visa trade-offs, explained without the jargon.", readMinutes: 6 },
-  { slug: "gym-chain-3-2x-members", kind: "CASE_STUDY", title: "How one gym chain grew members 3.2× with our app", excerpt: "Retention mechanics, AI coaching and the numbers behind the growth.", readMinutes: 7 },
-  { slug: "sme-lending-q3-2026", kind: "REPORT", title: "SME lending & finance conditions, Q3 2026", excerpt: "Rates, covenants and where challenger lenders are competing hardest.", readMinutes: 15 },
-  { slug: "founder-stories-8-figure-exit", kind: "VIDEO", title: "Founder stories: exiting at 8 figures", excerpt: "Three founders on preparation, valuation and life after the sale.", readMinutes: 22 },
-];
-
-/** Launch cross-sell rules — evaluated by n8n via the OutboxEvent table (docs/04 §4). */
-const AUTOMATION_RULES = [
-  { name: "Construction complete → Property Management", trigger: { event: "project.completed", companySlug: "construction" }, actions: [{ type: "recommend", companySlug: "realestate", service: "property-management" }, { type: "email", template: "recommend-property-mgmt" }] },
-  { name: "2nd invoice paid → Payroll", trigger: { event: "invoice.paid", companySlug: "accounting", occurrence: 2 }, actions: [{ type: "recommend", companySlug: "payroll" }] },
-  { name: "Payroll active → HR Services", trigger: { event: "customer.active", companySlug: "payroll" }, actions: [{ type: "recommend", companySlug: "hr" }] },
-  { name: "Marketing deal won → Sales Consulting", trigger: { event: "deal.won", companySlug: "marketing" }, actions: [{ type: "recommend", companySlug: "sales" }] },
-  { name: "Revenue threshold → Investment Advisory", trigger: { event: "customer.revenue_threshold", amountGte: 250000 }, actions: [{ type: "recommend", companySlug: "investment" }, { type: "crm.createLead", companySlug: "investment" }] },
-];
-
-const slugify = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
 
 async function main() {
-  console.log("Seeding tenants…");
+  console.log("Seeding businesses…");
   for (const c of COMPANIES) {
     const company = await prisma.company.upsert({
       where: { slug: c.slug },
-      update: { name: c.name, pillar: c.pillar, description: c.desc, status: "LIVE" },
+      update: { name: c.name, pillar: c.pillar, tagline: c.tagline, description: c.desc, status: "LIVE", brand: { accent: c.accent, mono: c.mono }, domains: c.domains },
       create: {
-        slug: c.slug, name: c.name, pillar: c.pillar, description: c.desc,
-        status: "LIVE",
-        brand: { accent: c.accent, mono: c.mono },
-        domains: [`${c.slug}.${process.env.NEXT_PUBLIC_ROOT_DOMAIN ?? "mazidigroup.com"}`],
+        slug: c.slug, name: c.name, pillar: c.pillar, tagline: c.tagline, description: c.desc,
+        status: "LIVE", brand: { accent: c.accent, mono: c.mono }, domains: c.domains,
       },
     });
     for (const [i, s] of c.svcs.entries()) {
       await prisma.service.upsert({
-        where: { companyId_slug: { companyId: company.id, slug: slugify(s) } },
-        update: { name: s, sortOrder: i },
-        create: {
-          companyId: company.id, slug: slugify(s), name: s, sortOrder: i,
-          summary: `${s} delivered by dedicated ${c.name.replace("Mazidi ", "")} specialists with transparent pricing and portal-tracked progress.`,
-        },
+        where: { companyId_slug: { companyId: company.id, slug: s.slug } },
+        update: { name: s.name, summary: s.summary, sortOrder: i, priceFrom: s.priceFrom ?? null },
+        create: { companyId: company.id, slug: s.slug, name: s.name, summary: s.summary, sortOrder: i, priceFrom: s.priceFrom ?? null },
       });
     }
   }
 
-  console.log("Setting plan prices (Stripe-billable services)…");
-  const PLAN_PRICES: [string, string, number][] = [
-    ["accounting", "bookkeeping", 149],
-    ["payroll", "payroll-runs", 99],
-    ["hr", "contracts", 129],
-    ["it", "managed-it", 299],
-    ["marketing", "seo", 950],
-    ["software", "crm", 49],
-    ["gymapp", "workout-tracking", 9.99],
-  ];
-  for (const [companySlug, serviceSlug, price] of PLAN_PRICES) {
-    const company = await prisma.company.findUnique({ where: { slug: companySlug } });
-    if (!company) continue;
-    await prisma.service.update({
-      where: { companyId_slug: { companyId: company.id, slug: serviceSlug } },
-      data: { priceFrom: price },
-    }).catch(() => console.warn(`  (skipped ${companySlug}/${serviceSlug})`));
-  }
+  console.log("Archiving retired placeholder tenants…");
+  await prisma.company.updateMany({ where: { slug: { in: ARCHIVED } }, data: { status: "ARCHIVED" } });
 
-  console.log("Seeding testimonials…");
-  if ((await prisma.testimonial.count()) === 0) {
-    await prisma.testimonial.createMany({ data: TESTIMONIALS.map((t) => ({ ...t, rating: 5 })) });
-  }
-
-  console.log("Seeding insights…");
-  for (const p of POSTS) {
-    await prisma.post.upsert({
-      where: { slug: p.slug },
-      update: {},
-      create: { ...p, publishedAt: new Date(), tags: [p.kind.toLowerCase()] },
-    });
-  }
-
-  console.log("Seeding automation rules…");
-  for (const r of AUTOMATION_RULES) {
-    const existing = await prisma.automationRule.findFirst({ where: { name: r.name } });
-    if (!existing) await prisma.automationRule.create({ data: r });
-  }
-
-  console.log(`Done. ${COMPANIES.length} tenants live.`);
+  console.log(`Done. ${COMPANIES.length} businesses live.`);
 }
 
 main()

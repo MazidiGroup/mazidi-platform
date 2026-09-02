@@ -12,5 +12,24 @@ const nextConfig = {
   },
   transpilePackages: ["@mazidi/ui", "@mazidi/config", "@mazidi/api", "@mazidi/db"],
   experimental: { serverActions: { allowedOrigins: ["*.mazidigroup.com", "localhost:3000"] } },
+  async redirects() {
+    const archived = [
+      "formation", "architecture", "development", "tech", "accounting", "payroll", "hr", "legal", "operations",
+      "software", "marketing", "branding", "sales", "consulting", "investment", "education", "venture", "coachgrowth",
+    ];
+    return [
+      // Pillar URLs renamed with the real-business restructure
+      { source: "/build", destination: "/property", permanent: true },
+      { source: "/run", destination: "/apps", permanent: true },
+      { source: "/grow", destination: "/it", permanent: true },
+      { source: "/insights", destination: "/", permanent: true },
+      // Renamed tenants
+      { source: "/sites/realestate/:path*", destination: "/sites/mazidihomes/:path*", permanent: true },
+      { source: "/sites/gymapp/:path*", destination: "/sites/musclemap/:path*", permanent: true },
+      { source: "/sites/coachapp/:path*", destination: "/sites/fitnessmusclecoach/:path*", permanent: true },
+      // Placeholder tenants that no longer exist
+      ...archived.map((slug) => ({ source: `/sites/${slug}/:path*`, destination: "/companies", permanent: false })),
+    ];
+  },
 };
 export default nextConfig;

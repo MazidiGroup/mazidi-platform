@@ -1,4 +1,5 @@
 import { prisma } from "@mazidi/db";
+import { companyForInterest } from "@mazidi/config";
 import type { LeadInput } from "../schemas";
 
 export class LeadCaptureError extends Error {
@@ -8,11 +9,11 @@ export class LeadCaptureError extends Error {
 /**
  * Every website form becomes CRM data: Contact + Lead + Activity
  * (docs/01 §CRM Philosophy) and emits an OutboxEvent for n8n follow-ups
- * (docs/04 §Automation). Leads without an explicit company route to
- * Mazidi Consulting, the ecosystem's front door.
+ * (docs/04 §Automation). Leads without an explicit company are routed by the
+ * visitor's stated interest (LEAD_INTERESTS in @mazidi/config).
  */
 export async function captureLead(input: LeadInput, meta: { ip?: string; path?: string }) {
-  const slug = input.companySlug ?? "consulting";
+  const slug = input.companySlug ?? companyForInterest(input.interest);
   // DB is the tenant registry (docs/01 §6) — admin-created LIVE tenants qualify;
   // DRAFT/ARCHIVED or unknown slugs are rejected, not 500s.
   const company = await prisma.company.findFirst({ where: { slug, status: "LIVE" } });

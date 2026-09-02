@@ -2,13 +2,13 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { clsx } from "clsx";
-import { PILLARS, PORTAL_URL, type PillarKey } from "@mazidi/config";
+import { PILLAR_KEYS, PILLARS, type PillarKey } from "@mazidi/config";
 import { ThemeToggle } from "./ThemeToggle";
 import { Logo } from "./Logo";
 
 type NavCompany = { slug: string; name: string; pillar: string };
 
-/** Sticky glass header + pillar mega-menu (docs/01 §4). Companies come from the DB via the layout. */
+/** Sticky glass header + pillar mega-menu. Companies come from the DB via the layout. */
 export function Header({ companies }: { companies: NavCompany[] }) {
   const [scrolled, setScrolled] = useState(false);
   const [mega, setMega] = useState<PillarKey | null>(null);
@@ -22,11 +22,8 @@ export function Header({ companies }: { companies: NavCompany[] }) {
   }, []);
 
   const links: { href: string; label: string; pillar?: PillarKey }[] = [
-    { href: "/build", label: "Build It", pillar: "build" },
-    { href: "/run", label: "Run It", pillar: "run" },
-    { href: "/grow", label: "Grow It", pillar: "grow" },
-    { href: "/companies", label: "Companies" },
-    { href: "/insights", label: "Insights" },
+    ...PILLAR_KEYS.map((k) => ({ href: `/${PILLARS[k].slug}`, label: PILLARS[k].name, pillar: k })),
+    { href: "/companies", label: "All businesses" },
     { href: "/about", label: "About" },
     { href: "/contact", label: "Contact" },
   ];
@@ -55,9 +52,6 @@ export function Header({ companies }: { companies: NavCompany[] }) {
         </nav>
         <div className="flex items-center gap-2.5">
           <ThemeToggle />
-          <a href={PORTAL_URL} className="rounded-full border border-line2 px-[18px] py-[9px] text-[.85rem] font-semibold transition-colors hover:border-gold hover:text-gold max-sm:hidden">
-            Client Portal
-          </a>
           <Link href="/contact" className="rounded-full bg-gold px-[18px] py-[9px] text-[.85rem] font-semibold text-[#14100A] transition-colors hover:bg-gold-soft">
             Book Consultation
           </Link>
@@ -73,7 +67,7 @@ export function Header({ companies }: { companies: NavCompany[] }) {
       </div>
 
       {mega && (
-        <div className="absolute left-1/2 top-full grid w-[min(920px,94vw)] -translate-x-1/2 translate-y-2 grid-cols-[220px_1fr] gap-7 rounded-lg border border-line bg-bg/85 p-7 shadow-lift backdrop-blur-2xl max-sm:grid-cols-1">
+        <div className="absolute left-1/2 top-full grid w-[min(820px,94vw)] -translate-x-1/2 translate-y-2 grid-cols-[240px_1fr] gap-7 rounded-lg border border-line bg-bg/85 p-7 shadow-lift backdrop-blur-2xl max-sm:grid-cols-1">
           <div>
             <h4 className="mb-2 font-display text-[1.35rem]">{PILLARS[mega].name}</h4>
             <p className="text-[.88rem] text-t2">{PILLARS[mega].desc}</p>
@@ -88,7 +82,7 @@ export function Header({ companies }: { companies: NavCompany[] }) {
                   className="rounded-xl px-3.5 py-[11px] text-[.9rem] font-medium text-t2 transition-colors hover:bg-bg3 hover:text-t1"
                   onClick={() => setMega(null)}
                 >
-                  {c.name.replace("Mazidi ", "")}
+                  {c.name}
                 </Link>
               ))}
           </div>
@@ -102,7 +96,6 @@ export function Header({ companies }: { companies: NavCompany[] }) {
               {l.label}
             </Link>
           ))}
-          <a href={PORTAL_URL} className="block py-3 font-display text-xl text-gold">Client Portal</a>
         </nav>
       )}
     </header>

@@ -8,9 +8,9 @@ const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
-  title: { default: "Mazidi Group — Build it. Run it. Grow it.", template: "%s — Mazidi Group" },
+  title: { default: "Mazidi Group — Property, construction, IT services and iOS apps", template: "%s — Mazidi Group" },
   description:
-    "Mazidi Group helps entrepreneurs, investors and businesses build companies, operate them efficiently and accelerate their growth through one connected ecosystem.",
+    "Mazidi Group is a family of businesses run from London and Dubai: Mazidi Homes (RERA-registered off-plan brokerage), Mazidi Construction, Mazidi IT Services and an apps studio behind Muscle Map, Fitness Muscle Coach, Football Academy and RERA Exam Prep Dubai.",
   openGraph: { siteName: "Mazidi Group", type: "website" },
 };
 
