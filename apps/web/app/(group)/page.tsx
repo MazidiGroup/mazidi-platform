@@ -98,10 +98,9 @@ export default async function HomePage() {
         <Container className="relative grid grid-cols-[1.05fr_.95fr] items-center gap-16 max-lg:grid-cols-1 max-lg:gap-12">
           <div>
             <div className="rise rise-1"><Kicker>Mazidi Group · London &amp; Dubai</Kicker></div>
-            <h1 className="rise rise-2 font-display text-[clamp(2.9rem,6.6vw,5.6rem)] font-medium leading-[1.02] tracking-[-.025em]">
-              Buildings you can<br />
-              walk into. Apps you<br />
-              can download.{" "}
+            <h1 className="rise rise-2 font-display text-[clamp(2.7rem,6.4vw,5.6rem)] font-medium leading-[1.02] tracking-[-.025em] [text-wrap:balance]">
+              Buildings you can walk into.<br className="max-lg:hidden" />{" "}
+              Apps you can download.{" "}
               <span className="bg-gradient-to-r from-gold to-gold-soft bg-clip-text text-transparent">One name on both.</span>
             </h1>
             <Lead className="rise rise-3 my-8 max-w-[560px]">
@@ -160,11 +159,11 @@ export default async function HomePage() {
           <div id="businesses" className="scroll-mt-28" />
           <SectionHead
             kicker="The businesses"
-            title={<>{companies.length} businesses.<br />Real contact details on every one.</>}
+            title={<>Property, construction and IT.<br />A real person behind each one.</>}
             aside={<ButtonLink href="/companies" variant="outline" size="sm">Open the directory <Arrow /></ButtonLink>}
           />
           <div className="grid grid-cols-3 gap-5 max-lg:grid-cols-2 max-sm:grid-cols-1">
-            {[...byPillar("build"), ...byPillar("grow"), ...byPillar("run")].map((c) => (
+            {[...byPillar("build"), ...byPillar("grow")].map((c) => (
               <CompanyCard key={c.slug} company={c} />
             ))}
           </div>
