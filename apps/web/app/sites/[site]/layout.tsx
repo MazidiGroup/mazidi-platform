@@ -105,7 +105,7 @@ export default async function SiteLayout({
                 href={`/sites/${company.slug}/contact`}
                 className="rounded-full bg-gold px-[18px] py-[9px] text-[.85rem] font-semibold text-[#14100A] hover:bg-gold-soft"
               >
-                Book Consultation
+                {isApp ? "Tell me when it's live" : "Book Consultation"}
               </Link>
             )}
           </div>

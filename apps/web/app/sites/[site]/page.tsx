@@ -163,7 +163,7 @@ export default async function SitePage({ params }: { params: Promise<{ site: str
         <Container>
           <div id="services" className="scroll-mt-24" />
           <SectionHead kicker={isApp ? "Features" : "Services"} title={isApp ? "What's in the app." : "What we do."} />
-          <div className="grid grid-cols-3 gap-5 max-lg:grid-cols-2 max-sm:grid-cols-1">
+          <div className={`grid gap-5 max-sm:grid-cols-1 ${company.services.length % 3 === 0 ? "grid-cols-3 max-lg:grid-cols-2" : "grid-cols-2"}`}>
             {company.services.map((s, i) => (
               <div key={s.slug} className="flex flex-col rounded-md border border-line bg-bg2 p-7">
                 <div className={`mb-[18px] grid h-[46px] w-[46px] place-items-center rounded-[13px] text-[.95rem] font-bold ${pillarBg[key]}`}>

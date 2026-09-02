@@ -50,7 +50,7 @@ export function HeroShowcase({ items }: { items: ShowcaseItem[] }) {
 
   return (
     <div
-      className="relative w-full max-w-[520px] justify-self-end max-lg:max-w-none max-lg:justify-self-stretch"
+      className="relative w-full"
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
     >

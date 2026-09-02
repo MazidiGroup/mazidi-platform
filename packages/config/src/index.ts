@@ -98,6 +98,8 @@ export interface CompanyProfile {
   };
   /** Three short proof points for cards and hero strips */
   highlights: string[];
+  /** Label for the card's primary link when it points at the tenant page */
+  cta?: string;
 }
 
 export const COMPANY_PROFILES: Record<TenantSlug, CompanyProfile> = {
@@ -123,6 +125,7 @@ export const COMPANY_PROFILES: Record<TenantSlug, CompanyProfile> = {
     email: "support@mazidigroup.com",
     location: "West London, United Kingdom",
     highlights: ["10/10 on Checkatrade", "26 verified client reviews", "28+ completed projects"],
+    cta: "See the work",
   },
   it: {
     slug: "it",

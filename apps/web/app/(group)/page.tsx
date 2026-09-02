@@ -89,40 +89,41 @@ export default async function HomePage() {
   return (
     <>
       {/* ── Hero ─────────────────────────────────────────── */}
-      <section className="relative flex min-h-screen items-center overflow-hidden pb-24 pt-[150px] max-sm:pt-[120px]">
+      <section className="relative overflow-hidden pb-24 pt-[150px] max-sm:pt-[120px]">
         <div className="hero-grid absolute inset-0" aria-hidden />
         <div className="orb orb-a left-[-10%] top-[-10%] h-[520px] w-[520px]" style={{ background: "rgba(192,138,78,.22)" }} aria-hidden />
         <div className="orb orb-b right-[-5%] top-[20%] h-[460px] w-[460px]" style={{ background: "rgba(78,126,192,.20)" }} aria-hidden />
         <div className="orb orb-a bottom-[-20%] left-[35%] h-[420px] w-[420px]" style={{ background: "rgba(63,163,114,.14)", animationDelay: "-9s" }} aria-hidden />
 
-        <Container className="relative grid grid-cols-[1.05fr_.95fr] items-center gap-16 max-lg:grid-cols-1 max-lg:gap-12">
-          <div>
-            <div className="rise rise-1"><Kicker>Mazidi Group · London &amp; Dubai</Kicker></div>
-            <h1 className="rise rise-2 font-display text-[clamp(2.7rem,6.4vw,5.6rem)] font-medium leading-[1.02] tracking-[-.025em] [text-wrap:balance]">
-              Buildings you can walk into.<br className="max-lg:hidden" />{" "}
-              Apps you can download.{" "}
-              <span className="bg-gradient-to-r from-gold to-gold-soft bg-clip-text text-transparent">One name on both.</span>
-            </h1>
-            <Lead className="rise rise-3 my-8 max-w-[560px]">
-              A Dubai off-plan brokerage, a West London renovation contractor, a business backup service and
-              an apps studio with {apps.length} iOS apps — {companies.length} real businesses, run by one family, with
-              the work to show for it.
-            </Lead>
-            <div className="rise rise-4 flex flex-wrap gap-3.5">
-              <ButtonLink href="#businesses">See the businesses <Arrow /></ButtonLink>
-              <ButtonLink href="/contact" variant="outline">Book Consultation</ButtonLink>
+        <Container className="relative">
+          <div className="rise rise-1"><Kicker>Mazidi Group · London &amp; Dubai</Kicker></div>
+          <h1 className="rise rise-2 max-w-[1040px] font-display text-[clamp(2.6rem,5.4vw,5.2rem)] font-medium leading-[1.02] tracking-[-.025em] [text-wrap:balance]">
+            Buildings you can walk into. Apps you can download.{" "}
+            <span className="bg-gradient-to-r from-gold to-gold-soft bg-clip-text text-transparent">One name on both.</span>
+          </h1>
+          <div className="mt-12 grid grid-cols-[1fr_.9fr] items-start gap-16 max-lg:grid-cols-1 max-lg:gap-12 max-sm:mt-9">
+            <div>
+              <Lead className="rise rise-3 mb-8 max-w-[560px]">
+                A Dubai off-plan brokerage, a West London renovation contractor, a business backup service and
+                an apps studio with {apps.length} iOS apps — {companies.length} real businesses, run by one family, with
+                the work to show for it.
+              </Lead>
+              <div className="rise rise-4 flex flex-wrap gap-3.5">
+                <ButtonLink href="#businesses">See the businesses <Arrow /></ButtonLink>
+                <ButtonLink href="/contact" variant="outline">Book Consultation</ButtonLink>
+              </div>
+              <dl className="rise rise-4 mt-12 grid max-w-[560px] grid-cols-4 gap-4 border-t border-line pt-7 max-sm:grid-cols-2">
+                {stats.map(([v, l]) => (
+                  <div key={l}>
+                    <dt className="sr-only">{l}</dt>
+                    <dd className="font-display text-[1.7rem] font-medium leading-none">{v}</dd>
+                    <dd className="mt-1 text-[.78rem] uppercase tracking-[.08em] text-t3">{l}</dd>
+                  </div>
+                ))}
+              </dl>
             </div>
-            <dl className="rise rise-4 mt-12 grid max-w-[560px] grid-cols-4 gap-4 border-t border-line pt-7 max-sm:grid-cols-2">
-              {stats.map(([v, l]) => (
-                <div key={l}>
-                  <dt className="sr-only">{l}</dt>
-                  <dd className="font-display text-[1.7rem] font-medium leading-none">{v}</dd>
-                  <dd className="mt-1 text-[.78rem] uppercase tracking-[.08em] text-t3">{l}</dd>
-                </div>
-              ))}
-            </dl>
+            <div className="rise rise-3 w-full"><HeroShowcase items={showcase} /></div>
           </div>
-          <HeroShowcase items={showcase} />
         </Container>
       </section>
 

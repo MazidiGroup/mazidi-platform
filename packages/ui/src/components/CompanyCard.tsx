@@ -56,7 +56,7 @@ export function CompanyStatusChip({ company, profile }: { company: CompanyCardDa
 export function companyHref(company: { slug: string }, profile: CompanyProfile | null) {
   if (profile?.website) return { href: profile.website, external: true, label: new URL(profile.website).host.replace(/^www\./, "") };
   if (profile?.app?.status === "live" && profile.app.url) return { href: `/sites/${company.slug}`, external: false, label: "See the app" };
-  return { href: `/sites/${company.slug}`, external: false, label: "Learn more" };
+  return { href: `/sites/${company.slug}`, external: false, label: profile?.cta ?? "Learn more" };
 }
 
 /** Interactive company card — grids on the home, companies and pillar pages. */

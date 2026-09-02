@@ -2,7 +2,7 @@
 export function ProofTicker({ items }: { items: string[] }) {
   const row = [...items, ...items];
   return (
-    <div className="relative border-y border-line bg-bg2/60 py-4" aria-label="Facts about Mazidi Group">
+    <div className="relative overflow-hidden border-y border-line bg-bg2/60 py-4" aria-label="Facts about Mazidi Group">
       <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-24 bg-gradient-to-r from-bg to-transparent" aria-hidden />
       <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-24 bg-gradient-to-l from-bg to-transparent" aria-hidden />
       <div className="marquee gap-10 px-5">

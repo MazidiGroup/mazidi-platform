@@ -10,7 +10,7 @@ import type { GalleryImage } from "@/lib/gallery";
 export function PhotoStrip({ images }: { images: GalleryImage[] }) {
   const row = [...images, ...images];
   return (
-    <div className="relative">
+    <div className="relative overflow-hidden">
       <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-16 bg-gradient-to-r from-bg to-transparent max-sm:w-6" aria-hidden />
       <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-16 bg-gradient-to-l from-bg to-transparent max-sm:w-6" aria-hidden />
       <div className="marquee items-end gap-4" style={{ animationDuration: "70s" }}>
