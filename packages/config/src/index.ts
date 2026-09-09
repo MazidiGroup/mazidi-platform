@@ -156,9 +156,14 @@ export const COMPANY_PROFILES: Record<TenantSlug, CompanyProfile> = {
     slug: "fitnessmusclecoach",
     legalName: "Aimal Mazidi",
     email: "support@mazidigroup.com",
-    location: "App Store · in review",
-    app: { status: "pending", platforms: ["iPhone"], pricing: "Coming soon" },
-    highlights: ["Separate coach and client logins", "Programmes, check-ins and progress", "Submitted to the App Store"],
+    location: "App Store · worldwide",
+    app: {
+      status: "live",
+      url: "https://apps.apple.com/us/app/fitness-muscle-coach/id6799203774",
+      platforms: ["iPhone", "iPad"],
+      pricing: "Free to download · coach plans from £19/month",
+    },
+    highlights: ["Separate coach and client logins", "Programmes, check-ins and direct messaging", "Offline logging that syncs later"],
   },
   footballacademy: {
     slug: "footballacademy",

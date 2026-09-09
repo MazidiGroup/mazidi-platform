@@ -71,7 +71,7 @@ const COMPANIES: SeedCompany[] = [
   {
     slug: "fitnessmusclecoach", name: "Fitness Muscle Coach", pillar: "RUN", mono: "FC", accent: "run",
     tagline: "Personal coaching, in your client's pocket.",
-    desc: "A personal coaching app with separate coach and client logins — programmes, check-ins, messaging and progress in one place. Submitted to the App Store and awaiting approval.",
+    desc: "A personal coaching app with separate coach and client logins — programmes, check-ins, messaging and progress in one place. Now on the App Store for iPhone and iPad.",
     domains: ["fitnessmusclecoach.mazidigroup.com"],
     svcs: [
       { slug: "coach-dashboard", name: "Coach Login", summary: "Manage every client, programme and check-in from one place." },
